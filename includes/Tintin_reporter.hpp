@@ -1,5 +1,5 @@
-#ifndef __TINTIN_REPORTER__H__
-#define __TINTIN_REPORTER__H__
+#ifndef __TINTIN_REPORTER__HPP__
+#define __TINTIN_REPORTER__HPP__
 
 #include <iostream>
 #include <fstream>

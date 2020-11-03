@@ -29,9 +29,9 @@ std::string Tintin_reporter::_buildLogEntry(std::string const & str) {
     time_t now = time(0);
     tm *ltm = localtime(&now);
 
-    entry << "[" << ltm->tm_mday << "/";
-    entry << 1 + ltm->tm_mon << "] ";
-    entry << "[ " << 5 + ltm->tm_hour << ":" << 30 + ltm->tm_min << ":" << ltm->tm_sec << " ] - ";
+    entry << "[ " << ltm->tm_mday << "/";
+    entry << 1 + ltm->tm_mon << "/" << 1900+ltm->tm_year << " - ";
+    entry << ltm->tm_hour << ":" << ltm->tm_min << ":" << ltm->tm_sec << " ] - ";
     entry << str;
     return entry.str();
 }

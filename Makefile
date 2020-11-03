@@ -46,6 +46,7 @@ I_INCLUDES += -I $(INCLUDES_TRACEROUTE)
 
 vpath %.hpp $(INCLUDES_TRACEROUTE)
 
+HEADER += general.hpp
 HEADER += Matt_daemon.hpp
 
 #----------------------------------- SOURCS -----------------------------------#
