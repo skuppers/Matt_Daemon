@@ -28,5 +28,7 @@
 *.app
 
 # Temp files & debug logs
+.vscode
+.vscode/*
 *.tmp
 *.log
