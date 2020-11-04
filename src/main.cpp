@@ -1,5 +1,6 @@
 #include "PolicyManager.hpp"
 #include "Tintin_reporter.hpp"
+#include "ConnectionManager.hpp"
 #include "general.hpp"
 
 #include <signal.h>
@@ -28,23 +29,33 @@ void	daemonize(Tintin_reporter *reporter)
 
 int		main(void)
 {
-    PolicyManager policymngr(DFLT_LOCKFILE);
-    policymngr.checkUID();
-    policymngr.lock();
+    PolicyManager policymgr(DFLT_LOCKFILE);
+    policymgr.checkUID();
+    policymgr.lock();
 
-    Tintin_reporter reporter(DFLT_LOGFILE);		// Make logfile append mode
-	g_reporter = &reporter;
-    reporter.log("Tintin reporter startup.");
+    Tintin_reporter logger(DFLT_LOGFILE);		// Make logfile append mode
+	g_reporter = &logger;
+    logger.log("Tintin reporter startup.");
     
     init_signal_handler(); // Children signal handling when forking for executing a shell
 
-	daemonize(&reporter);
+	//daemonize(&logger);
 
-	reporter.log("Succesfully daemonized.");
+	close(STDIN_FILENO);
+//	close(STDOUT_FILENO);
+	close(STDERR_FILENO);
+
+	//logger.log("Succesfully daemonized.");
 	
 	// Create TCP socket
-    // Listen to port 4242
+	// Listen to port 4242
     // bind() & listen()
+	ConnectionManager conmgr(&logger);
+	conmgr.initSocket();
+
+	printf("Socket is online\n");
+    
+	conmgr.handleIncoming();
 
     //  ->  handle connections max 3.
     //  ->  Write entries to logfile ()

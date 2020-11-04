@@ -8,6 +8,7 @@ void signal_handler(int sig)
 {
 	std::string signame = strsignal(sig);
 	g_reporter->log("Signal handler catched (" + signame + ").\n");
+	printf("Catched signal");
 }
 
 void init_signal_handler(void)

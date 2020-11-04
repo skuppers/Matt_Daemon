@@ -49,6 +49,7 @@ vpath %.hpp $(INCLUDES_TRACEROUTE)
 HEADER += general.hpp
 HEADER += Matt_daemon.hpp
 HEADER += PolicyManager.hpp
+HEADER += ConnectionManager.hpp
 
 #----------------------------------- SOURCS -----------------------------------#
 
@@ -58,6 +59,7 @@ SRCS += main.cpp
 SRCS += signals.cpp
 SRCS += Tintin_reporter.cpp
 SRCS += PolicyManager.cpp
+SRCS += ConnectionManager.cpp
 
 
 vpath %.cpp $(PATH_SRCS)
