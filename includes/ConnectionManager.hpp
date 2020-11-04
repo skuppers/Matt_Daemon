@@ -20,7 +20,6 @@ class ConnectionManager
 	private:
 		Tintin_reporter		*_logger;
     	int					_activeClients;
-
 		int					_listeningSocket;
 		struct sockaddr_in 	_sin;
 
@@ -31,7 +30,6 @@ class ConnectionManager
 
 		void	initSocket();
 		void	handleIncoming();
-
 
 		ConnectionManager &operator=(ConnectionManager const &rhs);
 };

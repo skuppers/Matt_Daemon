@@ -64,8 +64,6 @@ void    ConnectionManager::handleIncoming() {
         tv.tv_sec = 1;
 	    tv.tv_usec = 0;
         recv_set = master_set;
-
-        //printf("Still listening...\n");
         
         if (select(MAX_SELECT_FDS, &recv_set, NULL, NULL, &tv) == -1) {
 
@@ -81,7 +79,7 @@ void    ConnectionManager::handleIncoming() {
         {
             if (FD_ISSET(currentFD, &recv_set) != 0)
             {
-                if (currentFD == _listeningSocket) { // New connection
+                if (currentFD == _listeningSocket) {
 
                     int newfd;
 
@@ -98,8 +96,6 @@ void    ConnectionManager::handleIncoming() {
                         _activeClients++;
                         _logger->log(LOGLVL_INFO, "New client connection!");
                     }
-
-
 
                 } else {
                     int     readBytes;
