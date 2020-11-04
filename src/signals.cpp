@@ -1,5 +1,5 @@
 #include <signal.h>
-#include "general.hpp"
+#include <string.h>
 #include "Tintin_reporter.hpp"
 
 Tintin_reporter *g_reporter;
