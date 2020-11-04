@@ -55,6 +55,7 @@ HEADER += PolicyManager.hpp
 PATH_SRCS = src/
 
 SRCS += main.cpp
+SRCS += signals.cpp
 SRCS += Tintin_reporter.cpp
 SRCS += PolicyManager.cpp
 

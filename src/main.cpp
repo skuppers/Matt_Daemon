@@ -1,19 +1,24 @@
 #include "PolicyManager.hpp"
 #include "Tintin_reporter.hpp"
+#include "SignalHandler.hpp"
 #include "general.hpp"
+
+#include <signal.h>
+
+extern Tintin_reporter *g_reporter;
 
 int main(void)
 {
     PolicyManager policymngr(DFLT_LOCKFILE);
-
     policymngr.checkUID();
     policymngr.lock();
 
-    // Create Log directory
-//    Tintin_reporter tintin(DFLT_LOGFILE);   // Handle file errors
-//    tintin.log("Tintin reporter startup.");
+    Tintin_reporter reporter(DFLT_LOGFILE);
+    reporter.log("Tintin reporter startup.");
+    g_reporter = &reporter;
     
-    // Init Signal handler -> write to logfile
+    init_signal_handler(); // Children signals ?
+
 
     // Daemonize
 
@@ -23,8 +28,6 @@ int main(void)
 
     //  ->  handle connections max 3.
     //  ->  Write entries to logfile ()
-
-    sleep(7);
 
     // Client
     // -> Remote shell
