@@ -19,15 +19,19 @@ PolicyManager::~PolicyManager()
     return ;
 }
 
-std::string PolicyManager::getLockfilePath(void) const {
-    return this->_lockfilePath;
+void       PolicyManager::checkUID(void) const {
+    if (getuid() != 0) {
+        std::cerr << "Matt_Daemon: You need to be root to start this program." << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    return ;
 }
 
 void      PolicyManager::lock(void) {
     int fd = open(_lockfilePath.c_str(), O_CREAT | O_RDWR, 0644);
     if (fd < 0 || flock(fd, LOCK_EX | LOCK_NB) < 0) {
-        std::cerr << "Can't lock : " << _lockfilePath << std::endl;
-        std::cerr << strerror(errno) << std::endl << "Matt Daemon: Quitting." << std::endl;
+        std::cerr << "Matt_Daemon: Can't lock : " << _lockfilePath << std::endl;
+        std::cerr << strerror(errno) << std::endl << "Quitting." << std::endl;
 		exit(EXIT_FAILURE);
     }
     _fd = fd;
@@ -36,15 +40,18 @@ void      PolicyManager::lock(void) {
 
 void      PolicyManager::unlock(void)  {
     if (flock(_fd, LOCK_UN) < 0) {
-        std::cerr << "Can't unlock :" << _lockfilePath << std::endl;
-        std::cerr << strerror(errno) << std::endl << "Matt Daemon: Quitting." << std::endl;
+        std::cerr << "Matt_Daemon: Can't unlock :" << _lockfilePath << std::endl;
+        std::cerr << strerror(errno) << std::endl << "Quitting." << std::endl;
 		exit(EXIT_FAILURE);
     }
     close(_fd);
+    unlink(_lockfilePath.c_str());
     return ;
 }
 
-
+std::string PolicyManager::getLockfilePath(void) const {
+    return this->_lockfilePath;
+}
 
 
 PolicyManager &PolicyManager::operator=(const PolicyManager & rhs)

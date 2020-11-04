@@ -17,6 +17,7 @@ class PolicyManager
         ~PolicyManager(void);
         PolicyManager &operator=(PolicyManager const &rhs);
 
+        void            checkUID(void) const;
         std::string     getLockfilePath(void) const;
         void            lock(void);
         void            unlock(void);

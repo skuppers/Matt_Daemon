@@ -5,22 +5,25 @@ Tintin_reporter::Tintin_reporter(void)
     return ;
 }
 
-Tintin_reporter &Tintin_reporter::operator=(const Tintin_reporter & rhs)
-{
-    if (this != &rhs)
-        *this = rhs;
-    return *this;
-}
-
 Tintin_reporter::Tintin_reporter(std::string log_filename) : _logfileName(log_filename)
 {
+    mkdir(DFLT_LOGFILE_DIR, 0744);
     std::ofstream* outFile = new std::ofstream(_logfileName);
     if (outFile->fail())
     {
-        std::cout << "Matt_Daemon: Error creating logfile!" << std::endl << "Quitting" << std::endl;
-        exit(-1);
+        std::cout << "Matt_Daemon: Error creating logfile!" << std::endl << "Quitting." << std::endl;
+        exit(EXIT_FAILURE);
     }
     this->_logfile = outFile;
+}
+
+Tintin_reporter::~Tintin_reporter(void)
+{
+    if (this->_logfile->is_open())
+    {
+        *this->_logfile << Tintin_reporter::_buildLogEntry("Tintin_Reporter is shutting down.") << std::endl;
+        this->_logfile->close();
+    }
 }
 
 std::string Tintin_reporter::_buildLogEntry(std::string const & str) {
@@ -52,13 +55,12 @@ bool Tintin_reporter::isLogfileOpen(void) const {
     return false;
 }
 
-Tintin_reporter::~Tintin_reporter(void)
+
+Tintin_reporter &Tintin_reporter::operator=(const Tintin_reporter & rhs)
 {
-    if (this->_logfile->is_open())
-    {
-        *this->_logfile << Tintin_reporter::_buildLogEntry("Tintin_Reporter is shutting down.") << std::endl;
-        this->_logfile->close();
-    }
+    if (this != &rhs)
+        *this = rhs;
+    return *this;
 }
 
 std::ostream &operator<<(std::ostream &out, Tintin_reporter const & tintin)

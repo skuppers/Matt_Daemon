@@ -7,6 +7,9 @@
 #include <ctime>
 #include <chrono>
 #include <exception>
+#include <sys/stat.h>
+
+#define DFLT_LOGFILE_DIR	"/var/log/matt_daemon/"
 
 class Tintin_reporter
 {

@@ -4,18 +4,14 @@
 
 int main(void)
 {
-    if (getuid() != 0)
-    {
-        std::cerr << "Matt Daemon: You need to be root to start this program." << std::endl;
-        return EXIT_FAILURE;
-    }
+    PolicyManager policymngr(DFLT_LOCKFILE);
 
-    PolicyManager policymngr(LOCAL_LOCKFILE);
+    policymngr.checkUID();
     policymngr.lock();
 
     // Create Log directory
-    Tintin_reporter tintin(LOCAL_LOGFILE_PATH);   // Handle file errors
-    tintin.log("Tintin reporter startup.");
+//    Tintin_reporter tintin(DFLT_LOGFILE);   // Handle file errors
+//    tintin.log("Tintin reporter startup.");
     
     // Init Signal handler -> write to logfile
 
@@ -28,7 +24,7 @@ int main(void)
     //  ->  handle connections max 3.
     //  ->  Write entries to logfile ()
 
-    sleep(10);
+    sleep(7);
 
     // Client
     // -> Remote shell
