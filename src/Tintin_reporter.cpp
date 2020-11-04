@@ -15,38 +15,34 @@ Tintin_reporter::Tintin_reporter(std::string log_filename) : _logfileName(log_fi
         exit(EXIT_FAILURE);
     }
     this->_logfile = outFile;
+    log(LOGLVL_INFO, "Tintin reporter is online.");
 }
 
 Tintin_reporter::~Tintin_reporter(void)
 {
     if (this->_logfile->is_open())
     {
-        *this->_logfile << Tintin_reporter::_buildLogEntry("Tintin_Reporter is shutting down.") << std::endl;
+        *this->_logfile << Tintin_reporter::_buildLogEntry(LOGLVL_INFO, "Matt_Daemon is shutting down.") << std::endl;
         this->_logfile->close();
+        delete this->_logfile;
     }
 }
 
-std::string Tintin_reporter::_buildLogEntry(std::string const & str) {
-    std::ostringstream entry;
+std::string Tintin_reporter::_buildLogEntry(int loglvl, std::string const & str) {
+    std::ostringstream  entry;
+    char                timestring[26];
+    const std::time_t   currentTime = std::time(0);
 
-    time_t now = time(0);
-    tm *ltm = localtime(&now);
+    std::strftime(timestring, 26, "[%d/%m/%Y-%H:%M:%S]", std::localtime(&currentTime));
 
-    entry << "[ " << ltm->tm_mday << "/";
-    entry << 1 + ltm->tm_mon << "/" << 1900+ltm->tm_year << " - ";
-    entry << ltm->tm_hour << ":" << ltm->tm_min << ":" << ltm->tm_sec << " ] - ";
-    entry << str;
+    entry << timestring << LogLevel[loglvl] << " - " << str;
+
     return entry.str();
 }
 
-void Tintin_reporter::log(std::string const & str) {
+void Tintin_reporter::log(int loglevel, std::string const & str) {
     if (this->_logfile->is_open())
-        *this->_logfile << Tintin_reporter::_buildLogEntry(str) << std::endl;
-    else
-    {
-        throw std::exception();
-        return ;
-    }
+        *this->_logfile << Tintin_reporter::_buildLogEntry(loglevel, str) << std::endl;
 }
 
 bool Tintin_reporter::isLogfileOpen(void) const {

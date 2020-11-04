@@ -11,13 +11,13 @@ void	daemonize(Tintin_reporter *reporter)
 {
 	pid_t pid = fork();
 	if (pid < 0) {
-		reporter->log("[ERROR] - Matt_Daemon could not fork. Quitting.");
+		reporter->log(LOGLVL_ERROR, "Matt_Daemon could not fork. Quitting.");
 		exit(EXIT_FAILURE);
 	}
 	if (pid > 0)
 		exit(EXIT_SUCCESS);
 	if (setsid() < 0) {
-		reporter->log("[ERROR] - Matt_Daemon could not detach from session. Quitting.");
+		reporter->log(LOGLVL_ERROR, "Matt_Daemon could not detach from session. Quitting.");
 		exit(EXIT_FAILURE);
 	}
 	umask(022);
@@ -25,6 +25,7 @@ void	daemonize(Tintin_reporter *reporter)
 	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
 	close(STDERR_FILENO);
+	reporter->log(LOGLVL_INFO, "Succesfully daemonized.");
 }
 
 int		main(void)
@@ -35,30 +36,14 @@ int		main(void)
 
     Tintin_reporter logger(DFLT_LOGFILE);		// Make logfile append mode
 	g_reporter = &logger;
-    logger.log("Tintin reporter startup.");
     
     init_signal_handler(); // Children signal handling when forking for executing a shell
 
-	//daemonize(&logger);
-
-//	close(STDIN_FILENO);
-//	close(STDOUT_FILENO);
-//	close(STDERR_FILENO);
-
-	//logger.log("Succesfully daemonized.");
+	daemonize(&logger);
 	
-	// Create TCP socket
-	// Listen to port 4242
-    // bind() & listen()
 	ConnectionManager conmgr(&logger);
 	conmgr.initSocket();
-
-	printf("Socket is online\n");
-    
 	conmgr.handleIncoming();
-
-    //  ->  handle connections max 3.
-    //  ->  Write entries to logfile ()
 
     // Client
     // -> Remote shell

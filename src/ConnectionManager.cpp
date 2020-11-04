@@ -27,7 +27,7 @@ void    ConnectionManager::initSocket(void) {
     if ((sockfd = socket(PF_INET, SOCK_STREAM, proto->p_proto)) < 0
 
         || setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int)) < 0) {
-        _logger->log("ERROR: could not create socket.");
+        _logger->log(LOGLVL_ERROR, "Could not create socket.");
         exit(EXIT_FAILURE);
     }
 
@@ -38,87 +38,92 @@ void    ConnectionManager::initSocket(void) {
     memset(&_sin.sin_zero, '\0', 8);
     
     if (bind(sockfd, (const struct sockaddr *)&_sin, sizeof(_sin)) < 0) {
-        _logger->log("ERROR: could not bind socket.");
+        _logger->log(LOGLVL_ERROR, "Could not bind socket.");
         exit(EXIT_FAILURE);
     }
 
     if (listen(sockfd, MAX_CLIENTS) != 0) {
-        _logger->log("ERROR: socket could not listen.");
+        _logger->log(LOGLVL_ERROR, "Socket could not enable listening.");
         exit(EXIT_FAILURE);
     }
+    _logger->log(LOGLVL_INFO, "Socket is online");
     return ;
 }
 
 void    ConnectionManager::handleIncoming() {
-
     struct timeval	tv;
-
-    fd_set  recv_set;
-    fd_set  master_set;
+    fd_set          recv_set;
+    fd_set          master_set;
 
     FD_ZERO(&recv_set);
     FD_ZERO(&master_set);
     FD_SET(_listeningSocket, &master_set);
 
-    _activeClients = _listeningSocket;
-
     while (true)
     {
         tv.tv_sec = 1;
 	    tv.tv_usec = 0;
-        printf("Still listening...\n");
-
         recv_set = master_set;
+
+        //printf("Still listening...\n");
         
-        if (select(16, &recv_set, NULL, NULL, &tv) == -1) {
-            if (errno != EINTR) {
-                printf("Select failed.\n");
-                exit(EXIT_FAILURE);
+        if (select(MAX_SELECT_FDS, &recv_set, NULL, NULL, &tv) == -1) {
+
+            if (errno != EINTR)
+            {
+                _logger->log(LOGLVL_ERROR, "Select failed.");
+                return ;
             }
             continue;
         }
 
-        //printf("Currently %d clients\n", _activeClients);
-        for (int i = 0; i < 16; i++)
+        for (int currentFD = 0; currentFD < MAX_SELECT_FDS; currentFD++)
         {
-            if (FD_ISSET(i, &recv_set) != 0)
+            if (FD_ISSET(currentFD, &recv_set) != 0)
             {
-                if (i == _listeningSocket) { // New connection
+                if (currentFD == _listeningSocket) { // New connection
 
                     int newfd;
 
                     if ((newfd = accept(_listeningSocket, NULL, NULL)) == -1) {
-                        printf("Error accepting client connection.\n");
+                        _logger->log(LOGLVL_WARN, "Error accepting client connection.");
                     } else {
-                       // FD_SET(newfd, &master_set); // add new socket to master_set
-                       // if (newfd > _activeClients) {
-                       //     _activeClients = newfd;     // Keep track of max
-                       // }
-                        printf("New client connection!\n");
+                        if (_activeClients >= MAX_CLIENTS)
+                        {
+                            _logger->log(LOGLVL_WARN, "A client tried to connect, but no slot is avaible.");
+                            close(newfd);
+                            break ;
+                        }
+                        FD_SET(newfd, &master_set);
+                        _activeClients++;
+                        _logger->log(LOGLVL_INFO, "New client connection!");
                     }
 
 
 
-                } else { // Handle client data
-                 /*   int nbytes;
-                    char buf[256];
+                } else {
+                    int     readBytes;
+                    char    buf[256];
 
-                    if ((nbytes = recv(i, buf, sizeof(buf), 0)) <= 0) {
-                        // got error or connection closed by client
-                        if (nbytes == 0) {
-                            // connection closed
-                            printf("selectserver: socket hung up\n");
-                        } else {
-                            printf("recv error!\n");
-                        }
-                        close(i); // bye!
-                        FD_CLR(i, &master_set); // remove from master set
+                    memset(&buf, '\0', 256);
+                    if ((readBytes = recv(currentFD, buf, sizeof(buf), 0)) <= 0) {
+                        if (readBytes == 0)
+                            _logger->log(LOGLVL_INFO, "A client disconnected.");
+                        else
+                            _logger->log(LOGLVL_ERROR, "Critival receive error! Disconnecting client.");
+
+                        close(currentFD);
+                        FD_CLR(currentFD, &master_set);
+                        _activeClients--;
                     }
                     else
                     {
-                        printf("Received data\n");
+                        buf[strcspn(buf, "\n")] = '\0';
+                        if (strncmp(buf, "quit", 256) == 0)
+                            return ;
+                        _logger->log(LOGLVL_INFO, "Received client data:");
+                        _logger->log(LOGLVL_INFO, buf);
                     }
-                    */
 
                 }
             } 

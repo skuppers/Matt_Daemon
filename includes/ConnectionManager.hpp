@@ -13,6 +13,7 @@
 #include <netdb.h>
 
 #define MAX_CLIENTS 	3
+#define MAX_SELECT_FDS	16
 
 class ConnectionManager
 {
