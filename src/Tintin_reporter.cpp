@@ -34,9 +34,7 @@ std::string Tintin_reporter::_buildLogEntry(int loglvl, std::string const & str)
     const std::time_t   currentTime = std::time(0);
 
     std::strftime(timestring, 26, "[%d/%m/%Y-%H:%M:%S]", std::localtime(&currentTime));
-
     entry << timestring << LogLevel[loglvl] << " - " << str;
-
     return entry.str();
 }
 
@@ -44,13 +42,6 @@ void Tintin_reporter::log(int loglevel, std::string const & str) {
     if (this->_logfile->is_open())
         *this->_logfile << Tintin_reporter::_buildLogEntry(loglevel, str) << std::endl;
 }
-
-bool Tintin_reporter::isLogfileOpen(void) const {
-    if (this->_logfile->is_open())
-        return true;
-    return false;
-}
-
 
 Tintin_reporter &Tintin_reporter::operator=(const Tintin_reporter & rhs)
 {

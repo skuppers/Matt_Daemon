@@ -40,7 +40,6 @@ class Tintin_reporter
         ~Tintin_reporter(void);
 
         void log(int loglevel, std::string const & str);
-        bool isLogfileOpen(void) const;
         Tintin_reporter &operator=(Tintin_reporter const &rhs);
 };
 
