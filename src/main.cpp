@@ -1,3 +1,4 @@
+#include "PolicyManager.hpp"
 #include "Tintin_reporter.hpp"
 #include "general.hpp"
 
@@ -9,7 +10,8 @@ int main(void)
         return EXIT_FAILURE;
     }
 
-    // lockfile --> flock(lock_filepath, LOCK_FLAGS)
+    PolicyManager policymngr(LOCAL_LOCKFILE);
+    policymngr.lock();
 
     // Create Log directory
     Tintin_reporter tintin(LOCAL_LOGFILE_PATH);   // Handle file errors
@@ -26,6 +28,7 @@ int main(void)
     //  ->  handle connections max 3.
     //  ->  Write entries to logfile ()
 
+    sleep(10);
 
     // Client
     // -> Remote shell

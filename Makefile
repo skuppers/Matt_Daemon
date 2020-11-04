@@ -48,6 +48,7 @@ vpath %.hpp $(INCLUDES_TRACEROUTE)
 
 HEADER += general.hpp
 HEADER += Matt_daemon.hpp
+HEADER += PolicyManager.hpp
 
 #----------------------------------- SOURCS -----------------------------------#
 
@@ -55,6 +56,7 @@ PATH_SRCS = src/
 
 SRCS += main.cpp
 SRCS += Tintin_reporter.cpp
+SRCS += PolicyManager.cpp
 
 
 vpath %.cpp $(PATH_SRCS)
