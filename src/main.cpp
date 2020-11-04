@@ -41,9 +41,9 @@ int		main(void)
 
 	//daemonize(&logger);
 
-	close(STDIN_FILENO);
+//	close(STDIN_FILENO);
 //	close(STDOUT_FILENO);
-	close(STDERR_FILENO);
+//	close(STDERR_FILENO);
 
 	//logger.log("Succesfully daemonized.");
 	

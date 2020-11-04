@@ -23,7 +23,9 @@ void    ConnectionManager::initSocket(void) {
     int     sockfd;
     int     one = 1;
     
-    if ((sockfd = socket(PF_INET, SOCK_STREAM, 0)) < 0
+    struct protoent *proto = getprotobyname("tcp");
+    if ((sockfd = socket(PF_INET, SOCK_STREAM, proto->p_proto)) < 0
+
         || setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int)) < 0) {
         _logger->log("ERROR: could not create socket.");
         exit(EXIT_FAILURE);
@@ -48,57 +50,57 @@ void    ConnectionManager::initSocket(void) {
 }
 
 void    ConnectionManager::handleIncoming() {
-    fd_set  recv_set;
-    fd_set  master_set;
-
-
-    struct sockaddr_in remoteaddr;
 
     struct timeval	tv;
 
-	tv.tv_sec = 1;
-	tv.tv_usec = 0;
-
+    fd_set  recv_set;
+    fd_set  master_set;
 
     FD_ZERO(&recv_set);
     FD_ZERO(&master_set);
     FD_SET(_listeningSocket, &master_set);
+
     _activeClients = _listeningSocket;
-    while (1)
+
+    while (true)
     {
+        tv.tv_sec = 1;
+	    tv.tv_usec = 0;
         printf("Still listening...\n");
+
         recv_set = master_set;
-        if (select(_activeClients + 1, &recv_set, NULL, NULL, &tv) == -1) {
-          //  if (errno != EINTR) {
+        
+        if (select(16, &recv_set, NULL, NULL, &tv) == -1) {
+            if (errno != EINTR) {
                 printf("Select failed.\n");
                 exit(EXIT_FAILURE);
-            //}
+            }
+            continue;
         }
-        printf("Currently %d clients\n", _activeClients);
-        for (int i = 0; i < _activeClients; i++)
-        {
-            if (FD_ISSET(i, &recv_set)) {
-                if (i == _listeningSocket) { // New connection
 
-                    socklen_t addr_len = sizeof(remoteaddr);
+        //printf("Currently %d clients\n", _activeClients);
+        for (int i = 0; i < 16; i++)
+        {
+            if (FD_ISSET(i, &recv_set) != 0)
+            {
+                if (i == _listeningSocket) { // New connection
 
                     int newfd;
 
-                    if ((newfd = accept(_listeningSocket, (struct sockaddr*)&remoteaddr, &addr_len)) == -1) {
+                    if ((newfd = accept(_listeningSocket, NULL, NULL)) == -1) {
                         printf("Error accepting client connection.\n");
                     } else {
-                        FD_SET(newfd, &master_set); // add new socket to master_set
+                       // FD_SET(newfd, &master_set); // add new socket to master_set
                        // if (newfd > _activeClients) {
                        //     _activeClients = newfd;     // Keep track of max
                        // }
-                        printf("New client connection from: ");
-                        printf("%s\n", inet_ntoa(remoteaddr.sin_addr));
+                        printf("New client connection!\n");
                     }
 
 
 
                 } else { // Handle client data
-                    int nbytes;
+                 /*   int nbytes;
                     char buf[256];
 
                     if ((nbytes = recv(i, buf, sizeof(buf), 0)) <= 0) {
@@ -116,12 +118,11 @@ void    ConnectionManager::handleIncoming() {
                     {
                         printf("Received data\n");
                     }
-                    
+                    */
 
                 }
             } 
         }
-    sleep(1);
 
     }
     return ;
