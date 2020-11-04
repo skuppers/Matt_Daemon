@@ -3,6 +3,7 @@ Develop a simple daemon which listens to a given port an interpret some commands
 
 Todo Checklist:
  - Logging (Tintin_reporter)
+    - Add Loglevel (Info, warning, error...)
     - Advanced logs (Rotation, archiving)
  - Daemonizing
  - Signal handling
