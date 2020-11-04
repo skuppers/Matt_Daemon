@@ -3,8 +3,6 @@
 #include "ConnectionManager.hpp"
 #include "general.hpp"
 
-#include <signal.h>
-
 extern Tintin_reporter *g_reporter;
 
 void	daemonize(Tintin_reporter *reporter)
