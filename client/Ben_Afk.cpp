@@ -49,7 +49,7 @@ std::string *Ben_Afk::readInput(void) {
     std::cout << "Ben_Afk> ";
     std::getline(std::cin, *input);
     if (!std::cin) {
-        printf("\nExiting.\n");
+        std::cout << std::endl << "Exiting." << std::endl;
         exit(42);
     }
     return input;
@@ -86,10 +86,10 @@ int        Ben_Afk::communicate(std::string *input) {
 
         while (1)
         {
-            printf("$ ");
+            std::cout << "$ ";
             std::getline(std::cin, shellCMD);
             if (!std::cin) {
-                printf("\nExiting.\n");
+                std::cout << std::endl << "Exiting." << std::endl;
                 send(_socket, "disconnect", 10, 0);
                 exit(42);
             }
@@ -101,7 +101,7 @@ int        Ben_Afk::communicate(std::string *input) {
                 return false ;
             }
             if ((bytes = recv(_socket, serverResponse, 4096, 0)) <= 0) {
-                printf ("Error receiving shell response.\n");
+                std::cerr << "Error receiving shell response." << std::endl;
                 delete input;
                 return false ;
             }
@@ -110,7 +110,7 @@ int        Ben_Afk::communicate(std::string *input) {
                 delete input;
                 return false ;
             } else if (strncmp(serverResponse, "exec_error", 10) == 0) {
-                printf ("Error executing command.\n");
+                std::cerr << "Error executing command." << std::endl;
                 continue ;
             }
             fputs(serverResponse, stdout);
