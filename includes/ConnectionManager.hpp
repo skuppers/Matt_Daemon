@@ -9,7 +9,6 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <unistd.h>
-
 #include <netdb.h>
 
 #define MAX_CLIENTS 	3

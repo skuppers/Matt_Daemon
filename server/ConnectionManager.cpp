@@ -25,7 +25,6 @@ void    ConnectionManager::initSocket(void) {
     
     struct protoent *proto = getprotobyname("tcp");
     if ((sockfd = socket(PF_INET, SOCK_STREAM, proto->p_proto)) < 0
-
         || setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int)) < 0) {
         _logger->log(LOGLVL_ERROR, "Could not create socket.");
         exit(EXIT_FAILURE);
