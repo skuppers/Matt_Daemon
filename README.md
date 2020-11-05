@@ -15,8 +15,8 @@ Todo Checklist:
     - [x] Exit on 'quit' message
     - [x] Max 3 clients
     - [ ] Crypt communications (RSA / ECDSA / AES ?)
- - [ ] Client
-    - [ ] Basic prompt
-    - [ ] Pop a shell (/bin/sh)
+ - [x] Client
+    - [x] Basic prompt
+    - [x] Pop a shell (/bin/sh)
     - [ ] Download daemon logs
     - [ ] Authentication
