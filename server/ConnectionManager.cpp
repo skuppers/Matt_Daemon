@@ -71,29 +71,24 @@ pid_t    ConnectionManager::popShell(int filedesc) {
         {
             bzero(userCMD, 4096);
             if ((bytes = recv(filedesc, userCMD, 4000, 0)) <= 0) {
-                printf("Error receiving\n");
                 exit(EXIT_FAILURE);
             }
             if (strncmp(userCMD, "quit", 4) == 0 || strncmp(userCMD, "exit", 4) == 0) {
                 send(filedesc, "exit", 4, 0);
-                printf("Active clients--\n");
                 _activeClients--;
                 break ;
             } else if (strncmp(userCMD, "disconnect", 10) == 0) {
-                printf("Active clients--\n");
                 _activeClients--;
                 break ;
             }
             strncat(userCMD, " > /tmp/matt.exec", strlen(" > /tmp/matt.exec"));
             if (system(userCMD) != 0) {
-                printf("Error executing\n");
                 send(filedesc, "exec_error", 10, 0);
                 continue ;
             }
             execFile.open("/tmp/matt.exec");
             if (execFile.is_open() == false)
             {
-                printf("Error opening file\n");
                 exit(EXIT_FAILURE);
             }
             serverResponse.clear();
@@ -183,6 +178,7 @@ void    ConnectionManager::handleIncoming(void) {
                         if (strncmp(userInput, "shell", 5) == 0)
                         {
                             _childsPIDs.push_back(this->popShell(currentFD));
+                            _logger->log(LOGLVL_INFO, "Client spawned a shell with pid: ");
                             FD_CLR(currentFD, &master_set);
                         }
                         else
@@ -201,8 +197,10 @@ void    ConnectionManager::handleIncoming(void) {
         int status = 0;
         for (std::list<int>::iterator it = _childsPIDs.begin(); it != _childsPIDs.end(); it++) {
             exited = waitpid((pid_t)*it, &status, WNOHANG);
-            if (exited != -1 && exited != 0 && WIFEXITED(status))
-                printf("Pid %d exit status: %d\n", *it, WEXITSTATUS(status));
+            if (exited != -1 && exited != 0 && WIFEXITED(status)) {
+                _logger->log(LOGLVL_INFO, "Client closed shell and disconnected.");
+                _activeClients--;
+            }
         }
 
     }

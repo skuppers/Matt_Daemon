@@ -37,7 +37,7 @@ int		main(void)
     
     init_signal_handler(); // Children signal handling when forking for executing a shell
 
-	//daemonize(&logger);
+	daemonize(&logger);
 	
 	ConnectionManager conmgr(&logger);
 	conmgr.initSocket();
