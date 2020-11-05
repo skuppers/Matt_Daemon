@@ -26,8 +26,10 @@ void	daemonize(Tintin_reporter *reporter)
 	reporter->log(LOGLVL_INFO, "Succesfully daemonized.");
 }
 
-int		main(void)
+int		main(int ac, char **av)
 {
+	(void)ac;
+
     PolicyManager policymgr(DFLT_LOCKFILE);
     policymgr.checkUID();
     policymgr.lock();
@@ -41,7 +43,7 @@ int		main(void)
 	
 	ConnectionManager conmgr(&logger);
 	conmgr.initSocket();
-	conmgr.handleIncoming();
+	conmgr.handleIncoming(av);
 
     // Client
     // -> Remote shell

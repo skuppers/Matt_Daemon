@@ -62,6 +62,7 @@ SERVER_SRCS += ConnectionManager.cpp
 CLIENT_DIR = client/
 
 CLIENT_SRCS += Ben_Afk.cpp
+CLIENT_SRCS += client.cpp
 
 
 vpath %.cpp $(SERVER_DIR)

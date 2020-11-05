@@ -22,7 +22,10 @@ class Ben_Afk
         Ben_Afk(std::string destination, int port);
         ~Ben_Afk();
         
-        void    createSocket(void);
+        bool        createSocket(void);
+        bool        connectToDaemon(void);
+        std::string *readInput(void);
+        int         communicate(std::string *input);
 };
 
 #endif  //!__BEN_AFK__H__

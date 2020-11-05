@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
@@ -28,7 +29,7 @@ class ConnectionManager
     	~ConnectionManager(void);
 
 		void	initSocket();
-		void	handleIncoming();
+		void	handleIncoming(char **av);
 
 		ConnectionManager &operator=(ConnectionManager const &rhs);
 };

