@@ -49,9 +49,70 @@ void    ConnectionManager::initSocket(void) {
     return ;
 }
 
-#include <netinet/tcp.h>
-#include <fcntl.h>
-void    ConnectionManager::handleIncoming(char **av) {
+pid_t    ConnectionManager::popShell(int filedesc) {
+    pid_t shellpop = fork();
+    if (shellpop < 0)
+    {
+        return -42; // Error handling
+    }
+    else if (shellpop == 0)
+    {
+        int                 bytes;
+        char                userCMD[4096];
+        std::string         serverResponse;
+        std::stringstream   serverResponseStream;
+        std::ifstream       execFile;
+
+        if (send(filedesc, "Spawned shell.\n", strlen("Spawned shell.\n"), 0) <= 0) {
+            exit(EXIT_FAILURE);
+        }
+
+        while (1)
+        {
+            bzero(userCMD, 4096);
+            if ((bytes = recv(filedesc, userCMD, 4000, 0)) <= 0) {
+                printf("Error receiving\n");
+                exit(EXIT_FAILURE);
+            }
+            if (strncmp(userCMD, "quit", 4) == 0 || strncmp(userCMD, "exit", 4) == 0) {
+                send(filedesc, "exit", 4, 0);
+                printf("Active clients--\n");
+                _activeClients--;
+                break ;
+            } else if (strncmp(userCMD, "disconnect", 10) == 0) {
+                printf("Active clients--\n");
+                _activeClients--;
+                break ;
+            }
+            strncat(userCMD, " > /tmp/matt.exec", strlen(" > /tmp/matt.exec"));
+            if (system(userCMD) != 0) {
+                printf("Error executing\n");
+                send(filedesc, "exec_error", 10, 0);
+                continue ;
+            }
+            execFile.open("/tmp/matt.exec");
+            if (execFile.is_open() == false)
+            {
+                printf("Error opening file\n");
+                exit(EXIT_FAILURE);
+            }
+            serverResponse.clear();
+            serverResponseStream.str("");
+            while (std::getline(execFile, serverResponse))
+                serverResponseStream << serverResponse << '\n';
+            execFile.close();
+            serverResponse = serverResponseStream.str();
+
+            if (send(filedesc, serverResponse.c_str(), strlen(serverResponse.c_str()), 0) <= 0) {
+                exit(EXIT_FAILURE);
+            }
+        }
+        exit(EXIT_SUCCESS);
+    } else
+        return shellpop;
+}
+
+void    ConnectionManager::handleIncoming(void) {
     struct timeval	tv;
     fd_set          recv_set;
     fd_set          master_set;
@@ -100,10 +161,10 @@ void    ConnectionManager::handleIncoming(char **av) {
 
                 } else {
                     int     readBytes;
-                    char    buf[512];
+                    char    userInput[512];
 
-                    memset(&buf, '\0', 512);
-                    if ((readBytes = recv(currentFD, buf, sizeof(buf), 0)) <= 0) {
+                    memset(&userInput, '\0', 512);
+                    if ((readBytes = recv(currentFD, userInput, sizeof(userInput), 0)) <= 0) {
                         if (readBytes == 0)
                             _logger->log(LOGLVL_INFO, "A client disconnected.");
                         else
@@ -115,52 +176,19 @@ void    ConnectionManager::handleIncoming(char **av) {
                     }
                     else
                     {
-                        buf[255] = '\0';
-                        buf[strcspn(buf, "\n")] = '\0';
-                        if (strncmp(buf, "quit", 5) == 0)
+                        userInput[255] = '\0';
+                        userInput[strcspn(userInput, "\n")] = '\0';
+                        if (strncmp(userInput, "quit", 4) == 0 || strncmp(userInput, "exit", 4) == 0)
                             return ;
-                        if (strncmp(buf, "shell", 6) == 0)
+                        if (strncmp(userInput, "shell", 5) == 0)
                         {
-                            pid_t shellpop = fork();
-                            if (shellpop == 0)
-                            { // child
-                               // dprintf(currentFD, "Spawning shell:\n");
-int sockfd;
-int one = 1;
-                                struct protoent *proto = getprotobyname("tcp");
-                if ((sockfd = socket(PF_INET, SOCK_STREAM, proto->p_proto)) < 0
-                        || setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int)) < 0) {
-                    exit(1);
-                }
-
-    struct sockaddr_in _destAddr;
-
-    _destAddr.sin_family = AF_INET;
-    _destAddr.sin_port = htons(4242);
-    _destAddr.sin_addr.s_addr = inet_addr("192.168.0.20");
-    memset(&_destAddr.sin_zero, '\0', 8);
-
-
-    connect(sockfd, (struct sockaddr*)&_destAddr, sizeof(struct sockaddr));
-
-    int n = 0;
-    while (1)
-    {
-        if ((n = recv(sockfd, buf, 256, 0)) <= 0) {
-                printf ("Error receiving.\n");
-        }
-
-    }
-
-                                
-                                exit(EXIT_SUCCESS);
-                            }
+                            _childsPIDs.push_back(this->popShell(currentFD));
                             FD_CLR(currentFD, &master_set);
-                            close(currentFD);
-                        } else {
+                        }
+                        else
+                        {
                             _logger->log(LOGLVL_INFO, "Received client data:");
-                            _logger->log(LOGLVL_INFO, buf);
-                            dprintf(currentFD, "Logged your input.");
+                            _logger->log(LOGLVL_INFO, userInput);
                         }
                        
                     }
@@ -169,11 +197,13 @@ int one = 1;
             } 
         }
 
+        int exited;
         int status = 0;
-        pid_t childpid = waitpid(-1, &status, WNOHANG | WUNTRACED);
-        //if (childpid != -1 && WIFEXITED(status))
-           // _logger->log(LOGLVL_INFO, "Child has exited normally");
-
+        for (std::list<int>::iterator it = _childsPIDs.begin(); it != _childsPIDs.end(); it++) {
+            exited = waitpid((pid_t)*it, &status, WNOHANG);
+            if (exited != -1 && exited != 0 && WIFEXITED(status))
+                printf("Pid %d exit status: %d\n", *it, WEXITSTATUS(status));
+        }
 
     }
     return ;

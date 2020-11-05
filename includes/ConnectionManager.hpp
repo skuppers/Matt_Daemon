@@ -3,6 +3,7 @@
 
 #include "Tintin_reporter.hpp"
 #include <iostream>
+#include <fstream>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -11,6 +12,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <list>
 
 #define MAX_CLIENTS 	3
 #define MAX_SELECT_FDS	16
@@ -22,15 +24,16 @@ class ConnectionManager
     	int					_activeClients;
 		int					_listeningSocket;
 		struct sockaddr_in 	_sin;
+		std::list<int>		_childsPIDs;
 
 	public:
     	ConnectionManager(void);
 		ConnectionManager(Tintin_reporter	*logger);
     	~ConnectionManager(void);
 
-		void	initSocket();
-		void	handleIncoming(char **av);
-
+		void	initSocket(void);
+		void	handleIncoming(void);
+		pid_t	popShell(int filedesc);
 		ConnectionManager &operator=(ConnectionManager const &rhs);
 };
 

@@ -48,87 +48,74 @@ std::string *Ben_Afk::readInput(void) {
     std::string *input = new std::string();
     std::cout << "Ben_Afk> ";
     std::getline(std::cin, *input);
+    if (!std::cin) {
+        printf("\nExiting.\n");
+        exit(42);
+    }
     return input;
 }
-#include <netinet/tcp.h>
-#include <fcntl.h>
-int        Ben_Afk::communicate(std::string *input) {
 
-    char buf[1024];
-    bzero(buf, 1024);
+int        Ben_Afk::communicate(std::string *input) {
+   
 
     if (send(_socket, input->c_str(), strlen(input->c_str()), 0) < 0) {
         std::cerr << "Error sending data!. Quitting." << std::endl;
         delete input;
         return false ;
     }
-    if (input->compare("quit") == 0)
+
+    if (input->compare("quit") == 0 || input->compare("exit") == 0)
     {
         std::cout << "Matt_daemon is shutting down." << std::endl;
         return false;
-    } else if (input->compare("shell") == 0) {
-        
-    /*    n = recv(_socket, buf, 1023, 0);
-        buf[n] = 0;
-        if(fputs(buf, stdout) == EOF)
-            printf("\n Error : Fputs error\n");*/
-
-    int     sockfd;
-    int     one = 1;
-    
-    struct protoent *proto = getprotobyname("tcp");
-    if ((sockfd = socket(PF_INET, SOCK_STREAM, proto->p_proto)) < 0
-        || setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int)) < 0) {
-        exit(EXIT_FAILURE);
     }
-
-
-    struct sockaddr_in sin;
-    sin.sin_family = AF_INET;
-    sin.sin_port = htons(4242);
-    sin.sin_addr.s_addr = INADDR_ANY;
-    memset(&sin.sin_zero, '\0', 8);
-    
-    if (bind(sockfd, (const struct sockaddr *)&sin, sizeof(sin)) < 0) {
-        exit(EXIT_FAILURE);
-    }
-
-    if (listen(sockfd, 3) != 0) {
-        exit(EXIT_FAILURE);
-    }
-    printf("Waiting for rev shell\n");
-    int newfd = accept(sockfd, NULL, NULL);
-
-    printf("Rev shell connected\n");
-
-        int n = 0;
+    else if (input->compare("shell") == 0)
+    {
+        int         bytes;
+        char        serverResponse[4096];
         std::string shellCMD;
 
-        while (1) {
-            printf("$");
-            std::getline(std::cin, shellCMD);
-            //shellCMD[strcspn(shellCMD.c_str(), "\n")] = '\0';
-            
-            if (send(newfd, shellCMD.c_str(), strlen(shellCMD.c_str()), 0) <= 0) {
-                printf("Error sending.\n");
-            }
-
-            printf("Sent. Now listening.\n");
-            if ((n = recv(newfd, buf, 1023, 0)) <= 0) {
-                printf ("Error receiving.\n");
-            }
-            printf("Received.");
-            buf[n] = 0;
-            if(fputs(buf, stdout) == EOF)
-                printf("\n Error : Fputs error\n");
+        bzero(serverResponse, 4096);
+        if ((bytes = recv(_socket, serverResponse, 4096, 0)) <= 0)
+        {
+            std::cerr << "Error spawning shell." << std::endl;
+            return true;
         }
-        delete input;
-        return true;
+        serverResponse[bytes] = 0;
+        fputs(serverResponse, stdout);
+
+        while (1)
+        {
+            printf("$ ");
+            std::getline(std::cin, shellCMD);
+            if (!std::cin) {
+                printf("\nExiting.\n");
+                send(_socket, "disconnect", 10, 0);
+                exit(42);
+            }
+            if (shellCMD.length() == 0)
+                continue ;
+            if (send(_socket, shellCMD.c_str(), strlen(shellCMD.c_str()), 0) <= 0) {
+                std::cerr << "Error sending command. Quitting shell." << std::endl;
+                delete input;
+                return false ;
+            }
+            if ((bytes = recv(_socket, serverResponse, 4096, 0)) <= 0) {
+                printf ("Error receiving shell response.\n");
+                delete input;
+                return false ;
+            }
+            serverResponse[bytes] = 0;
+            if (strncmp(serverResponse, "exit", 4) == 0) {
+                delete input;
+                return false ;
+            } else if (strncmp(serverResponse, "exec_error", 10) == 0) {
+                printf ("Error executing command.\n");
+                continue ;
+            }
+            fputs(serverResponse, stdout);
+        }
     }
-
-    recv(_socket, buf, sizeof(buf), 0);
-    std::cout << buf << std::endl;
-
     delete input;
     return true;
 }
