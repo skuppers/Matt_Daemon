@@ -1,6 +1,7 @@
 .SUFFIXES:
 
-NAME=Matt_daemon
+SERVER=Matt_daemon
+CLIENT=Ben_AFK
 
 CC=clang++
 
@@ -22,12 +23,6 @@ else ifeq ($(d), 3)
 	CFLAGS += -fsanitize=address,undefined
 	CFLAGS += -Wpadded
 	CFLAGS += -pedantic
-else ifeq ($(d), 4)
-	CFLAGS += -g3
-	CFLAGS += -fsanitize=address,undefined
-	CFLAGS += -Wpadded
-	CFLAGS += -pedantic
-	CFLAGS += -Weverything
 endif
 ifneq ($(err), no)
 	CFLAGS += -Werror
@@ -46,39 +41,55 @@ I_INCLUDES += -I $(INCLUDES_TRACEROUTE)
 
 vpath %.hpp $(INCLUDES_TRACEROUTE)
 
-HEADER += general.hpp
-HEADER += Matt_daemon.hpp
-HEADER += PolicyManager.hpp
-HEADER += ConnectionManager.hpp
+SERVER_HEADER += general.hpp
+SERVER_HEADER += Matt_daemon.hpp
+SERVER_HEADER += PolicyManager.hpp
+SERVER_HEADER += ConnectionManager.hpp
 
-#----------------------------------- SOURCS -----------------------------------#
+CLIENT_HEADER += Ben_Afk.hpp
 
-PATH_SRCS = src/
+#----------------------------------- SOURCES ---------------------------------#
 
-SRCS += main.cpp
-SRCS += signals.cpp
-SRCS += Tintin_reporter.cpp
-SRCS += PolicyManager.cpp
-SRCS += ConnectionManager.cpp
+SERVER_DIR = server/
+
+SERVER_SRCS += Matt_daemon.cpp
+SERVER_SRCS += signals.cpp
+SERVER_SRCS += Tintin_reporter.cpp
+SERVER_SRCS += PolicyManager.cpp
+SERVER_SRCS += ConnectionManager.cpp
 
 
-vpath %.cpp $(PATH_SRCS)
+CLIENT_DIR = client/
+
+CLIENT_SRCS += Ben_Afk.cpp
+
+
+vpath %.cpp $(SERVER_DIR)
+vpath %.cpp $(CLIENT_DIR)
 
 #----------------------------------- OBJECTS ----------------------------------#
 
 PATH_OBJS = objs/
-OBJS = $(patsubst %.cpp, $(PATH_OBJS)%.o, $(SRCS))
+SERVER_OBJS = $(patsubst %.cpp, $(PATH_OBJS)%.o, $(SERVER_SRCS))
+CLIENT_OBJS = $(patsubst %.cpp, $(PATH_OBJS)%.o, $(CLIENT_SRCS))
 
 
 #---------------------------------- THA RULES ---------------------------------#
 
-all: $(PATH_OBJS) $(NAME)
+all: $(PATH_OBJS) $(SERVER) $(CLIENT)
 
-$(NAME): $(LIBFT) $(OBJS)
-	$(CC) $(CFLAGS) $(I_INCLUDES) $(OBJS) $(LIBFT) -o $@
+$(SERVER): $(SERVER_OBJS)
+	$(CC) $(CFLAGS) $(I_INCLUDES) $(SERVER_OBJS)  -o $@
 	printf "$@ is ready.\n"
 
-$(OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADER) Makefile
+$(CLIENT): $(CLIENT_OBJS)
+	$(CC) $(CFLAGS) $(I_INCLUDES) $(CLIENT_OBJS)  -o $@
+	printf "$@ is ready.\n"
+
+$(SERVER_OBJS): $(PATH_OBJS)%.o: %.cpp $(SERVER_HEADER) Makefile
+	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
+
+$(CLIENT_OBJS): $(PATH_OBJS)%.o: %.cpp $(CLIENT_HEADER) Makefile
 	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
 
 $(PATH_OBJS):
@@ -90,11 +101,14 @@ clean:
 	$(RM) $(OBJS)
 	$(RM) -R $(PATH_OBJS)
 	$(RM) -R $(DSYM)
-	printf "Objs from $(NAME) removed\n"
+	printf "Objs from $(SERVER) removed\n"
+	printf "Objs from $(CLIENT) removed\n"
 
 fclean: clean
-	$(RM) $(NAME)
-	printf "$(NAME) removed\n"
+	$(RM) $(SERVER)
+	$(RM) $(CLIENT)
+	printf "$(SERVER) removed\n"
+	printf "$(CLIENT) removed\n"
 
 re: fclean all
 
