@@ -2,6 +2,7 @@
 #define __CONNECTIONMANAGER__H__
 
 #include "Tintin_reporter.hpp"
+#include "Cryptograph.hpp"
 #include <iostream>
 #include <fstream>
 #include <sys/socket.h>
@@ -55,7 +56,7 @@ class ConnectionManager
 		void	handleIncoming(void);
 		pid_t	popShell(int filedesc);
 
-		//void 	testCrypto(Cryptograph cg);
+		void 	testCrypto(Cryptograph cg);
 };
 
 std::ostream & operator<<(std::ostream &out, ConnectionManager const &in);

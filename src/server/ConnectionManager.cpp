@@ -241,9 +241,9 @@ std::ostream &operator<<(std::ostream &out, ConnectionManager const & pm)
 
 
 
-/*
+
 void ConnectionManager::testCrypto(Cryptograph cg)
 {
 	(void)cg;
 	return ;
-}*/
+}

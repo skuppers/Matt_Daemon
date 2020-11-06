@@ -3,12 +3,13 @@
 SERVER=Matt_daemon
 CLIENT=Ben_AFK
 
-CC=clang++
+CC = clang++
 
 CFLAGS += -Wall
 CFLAGS += -Wextra
+CFLAGS += -D _GNU_SOURCE
 
-LIB += -lcrypto
+LIBCRYPTO += -lcrypto
 
 # Compiler Debug Flags
 ifeq ($(d), 0)
@@ -36,81 +37,82 @@ DSYM += $(DBNAME).dSYM
 
 #---------------------------------- INCLUDES ----------------------------------#
 
-INCLUDES_MATT = includes/
+INCLUDES_MATTDAEMON = includes/
 
-I_INCLUDES += -I $(INCLUDES_MATT)
+I_INCLUDES += -I $(INCLUDES_MATTDAEMON)
 
 #---------------------------------- HEADERS -----------------------------------#
 
-vpath %.hpp $(INCLUDES_MATT)
+vpath %.hpp $(INCLUDES_MATTDAEMON)
 
 # Common
-HEADERS += Cryptograph.hpp
+HEADER += Cryptograph.hpp
 
-# Daemon
-HEADERS += general.hpp
-HEADERS += PolicyManager.hpp
-HEADERS += ConnectionManager.hpp
+# client
+HEADER += Ben_Afk.hpp
 
-# Client
-HEADERS += Ben_Afk.hpp
+# deaemon
+HEADER += general.hpp
+HEADER += PolicyManager.hpp
+HEADER += ConnectionManager.hpp
 
 #----------------------------------- SOURCES ---------------------------------#
 
-SOURCE_DIR = src/
+PATH_CLIENT_SRCS += src/client/
+PATH_DAEMON_SRCS += src/server/
+PATH_COMMON_SRCS += src/common/
 
-COMMON_DIR = $(SOURCE_DIR)common/
+### COMMON
 
-COMMON_SRC += Cryptograph.cpp
+COMMON_SRCS += Cryptograph.cpp
 
-SERVER_DIR = $(SOURCE_DIR)server/
-
-SERVER_SRCS += Matt_daemon.cpp
-SERVER_SRCS += signals.cpp
-SERVER_SRCS += Tintin_reporter.cpp
-SERVER_SRCS += PolicyManager.cpp
-SERVER_SRCS += ConnectionManager.cpp
-
-
-CLIENT_DIR = $(SOURCE_DIR)client/
+### CLIENT
 
 CLIENT_SRCS += Ben_Afk.cpp
 CLIENT_SRCS += client.cpp
 
-vpath %.cpp $(COMMON_DIR)
-vpath %.cpp $(SERVER_DIR)
-vpath %.cpp $(CLIENT_DIR)
+### SERVER
+
+DAEMON_SRCS += Matt_daemon.cpp
+DAEMON_SRCS += signals.cpp
+DAEMON_SRCS += Tintin_reporter.cpp
+DAEMON_SRCS += PolicyManager.cpp
+DAEMON_SRCS += ConnectionManager.cpp
+
+vpath %.cpp $(PATH_CLIENT_SRCS)
+vpath %.cpp $(PATH_DAEMON_SRCS)
+vpath %.cpp $(PATH_COMMON_SRCS)
 
 
 #----------------------------------- OBJECTS ----------------------------------#
 
 PATH_OBJS = objs/
-SERVER_OBJS = $(patsubst %.cpp, $(PATH_OBJS)%.o, $(SERVER_SRCS))
 CLIENT_OBJS = $(patsubst %.cpp, $(PATH_OBJS)%.o, $(CLIENT_SRCS))
+DAEMON_OBJS = $(patsubst %.cpp, $(PATH_OBJS)%.o, $(DAEMON_SRCS))
 COMMON_OBJS = $(patsubst %.cpp, $(PATH_OBJS)%.o, $(COMMON_SRCS))
 
 
 #---------------------------------- THA RULES ---------------------------------#
 
-all: $(SERVER) $(CLIENT)
+all: $(CLIENT) $(SERVER)
 
-$(SERVER): $(PATH_OBJS) $(SERVER_OBJS) $(COMMON_OBJS) 
-	$(CC) $(CFLAGS) $(I_INCLUDES) $(SERVER_OBJS) $(COMMON_OBJS) $(LIB) -o $@
+$(CLIENT): $(PATH_OBJS) $(CLIENT_OBJS) $(COMMON_OBJS)
+	$(CC) $(CFLAGS) $(I_INCLUDES) $(CLIENT_OBJS) $(COMMON_OBJS) $(LIBCRYPTO) -o $@
 	printf "$@ is ready.\n"
 
-$(SERVER_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADERS) Makefile
+$(CLIENT_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADER) Makefile
 	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
 
 
-$(CLIENT): $(PATH_OBJS) $(CLIENT_OBJS) $(COMMON_OBJS) 
-	$(CC) $(CFLAGS) $(I_INCLUDES) $(CLIENT_OBJS) $(COMMON_OBJS) $(LIB) -o $@
+$(SERVER): $(PATH_OBJS) $(DAEMON_OBJS) $(COMMON_OBJS)
+	$(CC) $(CFLAGS) $(I_INCLUDES) $(DAEMON_OBJS) $(COMMON_OBJS) $(LIBCRYPTO) -o $@
 	printf "$@ is ready.\n"
 
-$(CLIENT_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADERS) Makefile
+$(DAEMON_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADER) Makefile
 	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
 
 
-$(COMMON_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADERS) Makefile
+$(COMMON_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADER) Makefile
 	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
 
 $(PATH_OBJS):

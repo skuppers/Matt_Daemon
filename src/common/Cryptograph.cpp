@@ -19,6 +19,7 @@ Cryptograph &Cryptograph::operator=(const Cryptograph & rhs)
 
 std::ostream &operator<<(std::ostream &out, Cryptograph const & pm)
 {
+    (void)pm;
     out << "Cryptograph" << std::endl;
     return out;
 }

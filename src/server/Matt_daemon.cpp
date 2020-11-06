@@ -45,7 +45,7 @@ int		main(void)
 
 	ConnectionManager conmgr(&logger);
 
-	//conmgr.testCrypto(cg);
+	conmgr.testCrypto(cg);
 
 	if (conmgr.initSocket()) 
 		conmgr.handleIncoming();
