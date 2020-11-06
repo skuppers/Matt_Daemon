@@ -34,7 +34,7 @@ int	CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 	}
 	return encryptedMessageLength;
 }
-
+#include <unistd.h>
 int CryptoWrapper::recvEncrypted(int sockfd, void *buf, size_t len) {
 	int 			decryptedMessageLength;
 	char			encryptedMessageBuffer[len];
@@ -46,6 +46,7 @@ int CryptoWrapper::recvEncrypted(int sockfd, void *buf, size_t len) {
 		printf("Error receiving data.\n");
 		exit(-1);
 	}
+	printf("Received %lu bytes\n", receivedBytes);
 
 	/* Possible overflow when decrypting it ? */
 	decryptedMessageLength = _cryptograph.AESDecrypt((unsigned char*)encryptedMessageBuffer,
