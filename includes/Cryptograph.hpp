@@ -27,7 +27,8 @@ class Cryptograph
 		
 		int 	initAES(void);
     	int 	generateAesKey(unsigned char **aesKey, unsigned char **aesIv);
-
+		int		AESEncrypt(const unsigned char *message, size_t messageLength, unsigned char **encryptedMessage);
+		int		AESDecrypt(unsigned char *encryptedMessage, size_t encryptedMessageLength, unsigned char **decryptedMessage);
 
 		/* RSA */
 		int initRSA();

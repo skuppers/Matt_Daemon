@@ -85,6 +85,8 @@ int Cryptograph::generateAesKey(unsigned char **aesKey, unsigned char **aesIv) {
 
     /* We will use a Password Based Key Derivation Function (PBKDF) */
     /* This password must be the same on client and daemon */
+    /* TODO: make this makefile-dependent/modifiable  */
+    /* Also create a 256 byte buffer for the password */
     strncpy((char*)aesPass, "AB1gf#ck2ing77P4ssW0r|)_For#crea39t10(@ES_Key);", _aesKeyLength);
 
     /* Same thing for the salt */
@@ -101,11 +103,64 @@ int Cryptograph::generateAesKey(unsigned char **aesKey, unsigned char **aesIv) {
     return 0;
 }
 
+int Cryptograph::AESEncrypt(const unsigned char *message, size_t messageLength, unsigned char **encryptedMessage)
+{
+    size_t    blockLength = 0;
+    size_t    encryptedMessageLength = 0;
 
+    /* Allocate memory for the encrypted message */
+    *encryptedMessage = (unsigned char*)malloc(messageLength + AES_BLOCK_SIZE);
+    if(encryptedMessage == NULL) {
+        return -1;
+    }
 
+    /* Put all together for encryption */
+    if(!EVP_EncryptInit_ex(_aesEncryptContext, EVP_aes_256_cbc(), NULL, _aesKey, _aesIv)) {
+        return -1;
+    }
 
+    /* Actual encryption process */
+    if(!EVP_EncryptUpdate(_aesEncryptContext, *encryptedMessage, (int*)&blockLength, (unsigned char*)message, messageLength)) {
+        return -1;
+    }
+    encryptedMessageLength += blockLength; // Padding
 
+    /* Encrypt the padded data if they is any */
+    if(!EVP_EncryptFinal_ex(_aesEncryptContext, *encryptedMessage + encryptedMessageLength, (int*)&blockLength)) {
+        return -1;
+    }
+    return (encryptedMessageLength + blockLength); // Total encrypted data length (data + padding)
+}
 
+int Cryptograph::AESDecrypt(unsigned char *encryptedMessage, size_t encryptedMessageLength, unsigned char **decryptedMessage) {
+    size_t decryptedMessageLength = 0;
+    size_t blockLength = 0;
+
+    /* Allocate memory for the decrypted message */
+    *decryptedMessage = (unsigned char*)malloc(encryptedMessageLength);
+    if(*decryptedMessage == NULL) {
+        return -1;
+    }
+
+    /* Define decryption parameters */
+    if(!EVP_DecryptInit_ex(_aesDecryptContext, EVP_aes_256_cbc(), NULL, _aesKey, _aesIv)) {
+        return -1;
+    }
+
+    /* Actual decryption process */
+    if(!EVP_DecryptUpdate(_aesDecryptContext, (unsigned char*)*decryptedMessage, (int*)&blockLength, encryptedMessage, (int)encryptedMessageLength)) {
+        return -1;
+    }
+    decryptedMessageLength += blockLength; // Padding
+
+    /* Decrypt the padded data if they is any */
+    if(!EVP_DecryptFinal_ex(_aesDecryptContext, (unsigned char*)*decryptedMessage + decryptedMessageLength, (int*)&blockLength)) {
+        return -1;
+    }
+    decryptedMessageLength += blockLength;
+
+    return ((int)decryptedMessageLength); // Total decrypted data length (data + padding)
+}
 
 Cryptograph &Cryptograph::operator=(const Cryptograph & rhs)
 {
