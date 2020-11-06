@@ -37,7 +37,7 @@ int		main(void)
     
     init_signal_handler();
 
-	daemonize(&logger);
+	//daemonize(&logger);
 	
 	ConnectionManager conmgr(&logger);
 	if (conmgr.initSocket()) 

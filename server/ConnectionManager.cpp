@@ -57,7 +57,7 @@ void    ConnectionManager::handleShellDisconnect(void) {
 		exited = waitpid((pid_t)*it, &status, WNOHANG);
 		if (exited != -1 && exited != 0 && WIFEXITED(status)) {
 			_logger->log(LOGLVL_INFO, "Client closed shell and disconnected.");
-			_activeClients--;
+			--_activeClients;
 		}
 	}
 }
@@ -72,16 +72,17 @@ int     ConnectionManager::acceptNewClients(void) {
 		if (_activeClients >= MAX_CLIENTS)
 		{
 			_logger->log(LOGLVL_WARN, "A client tried to connect, but no slot is avaible.");
-			send(newfd, "rst", 3, 0);
+			send(newfd, RST_CMD, strlen(RST_CMD), 0);
 			close(newfd);
 			return (-1);
 		}
-		send(newfd, "synack", 6, 0);
+		send(newfd, SYNACK_CMD, strlen(SYNACK_CMD), 0);
 		return (newfd);
 	}
 }
 
 void    ConnectionManager::handleIncoming(void) {
+	pid_t			shell_pid;
 	int             newfd;
 	struct timeval	tv;
 	fd_set          recv_set;
@@ -118,10 +119,10 @@ void    ConnectionManager::handleIncoming(void) {
 				else
 				{
 					int     readBytes;
-					char    userInput[512];
+					char    userInput[INPUT_BUFFER_SIZE];
 
-					bzero(userInput, 512);
-					if ((readBytes = recv(currentFD, userInput, sizeof(userInput), 0)) <= 0) {
+					bzero(userInput, INPUT_BUFFER_SIZE);
+					if ((readBytes = recv(currentFD, userInput, INPUT_BUFFER_SIZE - 1, 0)) <= 0) {
 						
 						if (readBytes == 0)
 							_logger->log(LOGLVL_INFO, "A client disconnected.");
@@ -136,23 +137,31 @@ void    ConnectionManager::handleIncoming(void) {
 					{
 						userInput[readBytes] = '\0';
 						userInput[strcspn(userInput, "\n")] = '\0';
-						if (strncmp(userInput, "quit", 4) == 0 || strncmp(userInput, "exit", 4) == 0)
+
+						if (strncmp(userInput, QUIT_CMD, strlen(QUIT_CMD)) == 0
+							|| strncmp(userInput, EXIT_CMD, strlen(EXIT_CMD)) == 0)
 							return ;
-						if (strncmp(userInput, "shell", 5) == 0)
+
+						if (strncmp(userInput, SHELL_CMD, strlen(SHELL_CMD)) == 0)
 						{
-							_childsPIDs.push_back(this->popShell(currentFD));
-							_logger->log(LOGLVL_INFO, "Client spawned a shell with pid: ");
+							if ((shell_pid = this->popShell(currentFD)) == SHELL_SPAWN_ERROR) {
+								_logger->log(LOGLVL_ERROR, "Shell spawn error");
+								close(currentFD);
+								FD_CLR(currentFD, &master_set);
+								--_activeClients;
+								_logger->log(LOGLVL_INFO, "Client disconnected due to shell spawn error.");
+								continue ;
+							}
+							_childsPIDs.push_back(shell_pid);
+							_logger->log(LOGLVL_INFO, "Client spawned a shell with pid: " + std::to_string(shell_pid));
 							FD_CLR(currentFD, &master_set);
 						}
 						else
 							_logger->log(LOGLVL_INFO, "Received client data: \"" + std::string(userInput) + "\"");
-					   
 					}
-
 				}
 			} 
 		}
-
 		handleShellDisconnect();
 	}
 	return ;
@@ -161,41 +170,39 @@ void    ConnectionManager::handleIncoming(void) {
 pid_t    ConnectionManager::popShell(int filedesc) {
 	pid_t shellpop = fork();
 	if (shellpop < 0)
-	{
-		return -42; // Error handling
-	}
+		return (SHELL_SPAWN_ERROR);
 	else if (shellpop == 0)
 	{
 		int                 bytes;
-		char                userCMD[4096];
+		char                userCMD[GENERIC_BUFFER_SIZE];
 		std::string         serverResponse;
 		std::stringstream   serverResponseStream;
 		std::ifstream       execFile;
 
-		if (send(filedesc, "Spawned shell.\n", strlen("Spawned shell.\n"), 0) <= 0) {
+		if (send(filedesc, CONFIRM_SHELL, strlen(CONFIRM_SHELL), 0) <= 0) {
 			exit(EXIT_FAILURE);
 		}
-
 		while (1)
 		{
-			bzero(userCMD, 4096);
-			if ((bytes = recv(filedesc, userCMD, 4000, 0)) <= 0) {
+			bzero(userCMD, GENERIC_BUFFER_SIZE);
+			if ((bytes = recv(filedesc, userCMD, GENERIC_BUFFER_SIZE - 1, 0)) <= 0) {
 				exit(EXIT_FAILURE);
 			}
-			if (strncmp(userCMD, "quit", 4) == 0 || strncmp(userCMD, "exit", 4) == 0) {
-				send(filedesc, "exit", 4, 0);
+			if (strncmp(userCMD, QUIT_CMD, strlen(QUIT_CMD)) == 0
+				|| strncmp(userCMD, EXIT_CMD, strlen(EXIT_CMD)) == 0) {
+				send(filedesc, EXIT_CMD, strlen(EXIT_CMD), 0);
 				_activeClients--;
 				break ;
-			} else if (strncmp(userCMD, "disconnect", 10) == 0) {
+			} else if (strncmp(userCMD, DISCONNECT_CMD, strlen(DISCONNECT_CMD)) == 0) {
 				_activeClients--;
 				break ;
 			}
-			strncat(userCMD, " > /tmp/matt.exec", strlen(" > /tmp/matt.exec"));
+			strncat(userCMD, EXEC_CMD, strlen(EXEC_CMD));
 			if (system(userCMD) != 0) {
-				send(filedesc, "exec_error", 10, 0);
+				send(filedesc, EXEC_ERROR_CMD, strlen(EXEC_ERROR_CMD), 0);
 				continue ;
 			}
-			execFile.open("/tmp/matt.exec");
+			execFile.open(EXEC_FILE);
 			if (execFile.is_open() == false)
 			{
 				exit(EXIT_FAILURE);

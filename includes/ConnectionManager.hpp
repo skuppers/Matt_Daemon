@@ -14,9 +14,25 @@
 #include <netdb.h>
 #include <list>
 
-#define MAX_CLIENTS 	3
-#define MAX_SELECT_FDS	16
-#define LST_PORT		4242
+#define MAX_CLIENTS 		3
+#define MAX_SELECT_FDS		16
+#define LST_PORT			4242
+#define GENERIC_BUFFER_SIZE	4096
+#define INPUT_BUFFER_SIZE	512
+#define SHELL_SPAWN_ERROR	-42
+
+#define	QUIT_CMD			"quit"
+#define EXIT_CMD			"exit"
+#define SHELL_CMD			"shell"
+#define RST_CMD				"rst"
+#define SYNACK_CMD 			"synack"
+#define DISCONNECT_CMD 		"disconnect"
+#define EXEC_ERROR_CMD 		"exec_error"
+#define CONFIRM_SHELL 		"Spawned shell.\n"
+#define DENY_SHELL			"shell_error"
+
+#define EXEC_FILE			"/tmp/matt.ex"
+#define EXEC_CMD			" > /tmp/matt.ex"
 
 class ConnectionManager
 {
