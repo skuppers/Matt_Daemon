@@ -9,7 +9,7 @@ int main(int ac, char **av)
 {
     std::string *userInput;
 
-    if (ac < 2)
+    if (ac < 3)
         printUsage();
 
     Ben_Afk benny(av[1], atoi(av[2]));
