@@ -42,7 +42,6 @@ I_INCLUDES += -I $(INCLUDES_TRACEROUTE)
 vpath %.hpp $(INCLUDES_TRACEROUTE)
 
 SERVER_HEADER += general.hpp
-SERVER_HEADER += Matt_daemon.hpp
 SERVER_HEADER += PolicyManager.hpp
 SERVER_HEADER += ConnectionManager.hpp
 
