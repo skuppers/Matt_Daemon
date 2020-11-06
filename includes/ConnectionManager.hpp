@@ -16,6 +16,7 @@
 
 #define MAX_CLIENTS 	3
 #define MAX_SELECT_FDS	16
+#define LST_PORT		4242
 
 class ConnectionManager
 {
@@ -25,13 +26,15 @@ class ConnectionManager
 		int					_listeningSocket;
 		struct sockaddr_in 	_sin;
 		std::list<int>		_childsPIDs;
+		void				handleShellDisconnect(void);
+		int					acceptNewClients(void);
 
 	public:
     	ConnectionManager(void);
 		ConnectionManager(Tintin_reporter	*logger);
     	~ConnectionManager(void);
 
-		void	initSocket(void);
+		bool	initSocket(void);
 		void	handleIncoming(void);
 		pid_t	popShell(int filedesc);
 		ConnectionManager &operator=(ConnectionManager const &rhs);

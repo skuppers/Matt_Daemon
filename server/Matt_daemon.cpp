@@ -35,18 +35,13 @@ int		main(void)
     Tintin_reporter logger(DFLT_LOGFILE);		// Make logfile append mode
 	g_reporter = &logger;
     
-    init_signal_handler(); // Children signal handling when forking for executing a shell
+    init_signal_handler();
 
 	daemonize(&logger);
 	
 	ConnectionManager conmgr(&logger);
-	conmgr.initSocket();
-	conmgr.handleIncoming();
-
-    // Client
-    // -> Remote shell
-    // -> Chiffrage traffic
-    // -> Authentication Asym keys
+	if (conmgr.initSocket()) 
+		conmgr.handleIncoming();
     
     return 0;
 }
