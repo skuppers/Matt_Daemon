@@ -5,7 +5,7 @@ ConnectionManager::ConnectionManager(void)
 	return ;
 }
 
-ConnectionManager::ConnectionManager(Tintin_reporter *logger) : _logger(logger)
+ConnectionManager::ConnectionManager(Tintin_reporter *logger, CryptoWrapper *cw) : _logger(logger), _cryptoWrapper(cw)
 {
 	_activeClients = 0;
 	_listeningSocket = -1;
@@ -73,11 +73,14 @@ int     ConnectionManager::acceptNewClients(void) {
 		if (_activeClients >= MAX_CLIENTS)
 		{
 			_logger->log(LOGLVL_WARN, "A client tried to connect, but no slot is avaible.");
-			send(newfd, RST_CMD, strlen(RST_CMD), 0);
+
+			_cryptoWrapper->sendEncrypted(newfd, RST_CMD, strlen(RST_CMD));
+
 			close(newfd);
 			return (-1);
 		}
-		send(newfd, SYNACK_CMD, strlen(SYNACK_CMD), 0);
+
+		_cryptoWrapper->sendEncrypted(newfd, SYNACK_CMD, strlen(SYNACK_CMD));
 		return (newfd);
 	}
 }

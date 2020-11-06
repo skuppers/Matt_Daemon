@@ -1,4 +1,6 @@
 #include "Ben_Afk.hpp"
+#include "Cryptograph.hpp"
+#include "CryptoWrapper.hpp"
 
 void printUsage(void) {
     std::cout << "Usage: ./Ben_AFK <destination> <port>" << std::endl;
@@ -12,7 +14,11 @@ int main(int ac, char **av)
     if (ac < 3)
         printUsage();
 
-    Ben_Afk benny(av[1], atoi(av[2]));
+    Cryptograph     cg;
+    CryptoWrapper   cw(cg);
+
+    Ben_Afk benny(av[1], atoi(av[2]), &cw);
+
     if (benny.createSocket() && benny.connectToDaemon())
     {
         while (1) {

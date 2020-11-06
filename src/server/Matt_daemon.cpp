@@ -2,6 +2,7 @@
 #include "Tintin_reporter.hpp"
 #include "ConnectionManager.hpp"
 #include "Cryptograph.hpp"
+#include "CryptoWrapper.hpp"
 #include "general.hpp"
 
 extern Tintin_reporter *g_reporter;
@@ -40,13 +41,10 @@ int		main(void)
 
 	//daemonize(&logger);
 	
-	Cryptograph cg;
+	Cryptograph 	cg;
+	CryptoWrapper 	cw(cg);
 
-
-	ConnectionManager conmgr(&logger);
-
-	conmgr.testCrypto(cg);
-
+	ConnectionManager conmgr(&logger, &cw);
 	if (conmgr.initSocket()) 
 		conmgr.handleIncoming();
     

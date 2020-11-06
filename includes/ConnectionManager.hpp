@@ -3,6 +3,7 @@
 
 #include "Tintin_reporter.hpp"
 #include "Cryptograph.hpp"
+#include "CryptoWrapper.hpp"
 #include <iostream>
 #include <fstream>
 #include <sys/socket.h>
@@ -39,6 +40,7 @@ class ConnectionManager
 {
 	private:
 		Tintin_reporter		*_logger;
+		CryptoWrapper		*_cryptoWrapper;
     	int					_activeClients;
 		int					_listeningSocket;
 		struct sockaddr_in 	_sin;
@@ -48,7 +50,7 @@ class ConnectionManager
 
 	public:
     	ConnectionManager(void);
-		ConnectionManager(Tintin_reporter *logger);
+		ConnectionManager(Tintin_reporter *logger, CryptoWrapper *cw);
     	~ConnectionManager(void);
 		ConnectionManager &operator=(ConnectionManager const &rhs);
 

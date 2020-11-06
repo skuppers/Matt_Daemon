@@ -27,11 +27,11 @@ class Cryptograph
 		
 		int 	initAES(void);
     	int 	generateAesKey(unsigned char **aesKey, unsigned char **aesIv);
-		int		AESEncrypt(const unsigned char *message, size_t messageLength, unsigned char **encryptedMessage);
+/*		int		AESEncrypt(const unsigned char *message, size_t messageLength, unsigned char **encryptedMessage);
 		int		AESDecrypt(unsigned char *encryptedMessage, size_t encryptedMessageLength, unsigned char **decryptedMessage);
-
+*/
 		/* RSA */
-		int initRSA();
+//		int initRSA();
 
 
 		/* General */
@@ -47,12 +47,12 @@ class Cryptograph
 		Cryptograph &operator=(Cryptograph const &rhs);
 
 		/* AES */
-		int aesEncrypt(const unsigned char *message, size_t messageLength, unsigned char **encryptedMessage);
-    	int aesDecrypt(unsigned char *encryptedMessage, size_t encryptedMessageLength, unsigned char **decryptedMessage);
-		int getAesKey(unsigned char **aesKey);
+		int AESEncrypt(const unsigned char *message, size_t messageLength, unsigned char **encryptedMessage);
+    	int AESDecrypt(unsigned char *encryptedMessage, size_t encryptedMessageLength, unsigned char **decryptedMessage);
+/*		int getAesKey(unsigned char **aesKey);
     	int setAesKey(unsigned char *aesKey, size_t aesKeyLen);
     	int getAesIv(unsigned char **aesIv);
-    	int setAesIv(unsigned char *aesIv, size_t aesIvLen);
+    	int setAesIv(unsigned char *aesIv, size_t aesIvLen);*/
 
 
 

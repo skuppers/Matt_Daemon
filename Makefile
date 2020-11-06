@@ -6,7 +6,7 @@ CLIENT=Ben_AFK
 CC = clang++
 
 CFLAGS += -Wall
-CFLAGS += -Wextra
+CFLAGS += -Wextra -fsanitize=address
 CFLAGS += -D _GNU_SOURCE
 
 LIBCRYPTO += -lcrypto
@@ -47,6 +47,7 @@ vpath %.hpp $(INCLUDES_MATTDAEMON)
 
 # Common
 HEADER += Cryptograph.hpp
+HEADER += CryptoWrapper.hpp
 
 # client
 HEADER += Ben_Afk.hpp
@@ -65,6 +66,7 @@ PATH_COMMON_SRCS += src/common/
 ### COMMON
 
 COMMON_SRCS += Cryptograph.cpp
+COMMON_SRCS += CryptoWrapper.cpp
 
 ### CLIENT
 

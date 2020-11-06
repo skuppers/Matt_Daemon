@@ -1,6 +1,7 @@
 #ifndef __BEN_AFK__H__
 #define __BEN_AFK__H__
 
+#include "CryptoWrapper.hpp"
 #include <iostream>
 #include <unistd.h>
 #include <string.h>
@@ -27,6 +28,7 @@
 class Ben_Afk
 {
     private:
+        CryptoWrapper       *_cryptoWrapper;
         std::string         _destIP;
         int                 _destPort;
         int                 _socket;
@@ -34,14 +36,14 @@ class Ben_Afk
         
     public:
         Ben_Afk(void);
-        Ben_Afk(std::string destination, int port);
+        Ben_Afk(std::string destination, int port, CryptoWrapper *cw);
         ~Ben_Afk(void);
         Ben_Afk &operator=(Ben_Afk const &rhs);
         
-        bool        createSocket(void);
-        bool        connectToDaemon(void);
-        std::string *readInput(void);
-        int         communicate(std::string *input);
+        bool            createSocket(void);
+        bool            connectToDaemon(void);
+        std::string     *readInput(void);
+        int             communicate(std::string *input);
 };
 
 std::ostream & operator<<(std::ostream &out, Ben_Afk const &in);

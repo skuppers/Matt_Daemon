@@ -5,7 +5,7 @@ Ben_Afk::Ben_Afk(void)
 	return ;
 }
 
-Ben_Afk::Ben_Afk(std::string dest, int port) : _destIP(dest), _destPort(port)
+Ben_Afk::Ben_Afk(std::string dest, int port, CryptoWrapper *cw) : _cryptoWrapper(cw), _destIP(dest), _destPort(port)
 {
 	_socket = -1;
 	return ;
@@ -41,10 +41,13 @@ bool    Ben_Afk::connectToDaemon(void) {
 	}
 	char buff[CONNECT_BUFF_SIZE];
 	bzero(buff, CONNECT_BUFF_SIZE);
-	recv(_socket, &buff, CONNECT_BUFF_SIZE - 1, 0);
+
+	_cryptoWrapper->recvEncrypted(_socket, &buff, CONNECT_BUFF_SIZE);
+
 	if (strncmp(buff, RST_CMD, strlen(RST_CMD)) == 0) {
 		std::cerr << "Error connecting to " << _destIP << ":" << _destPort << " : no slot avaible." << std::endl;
 		return false;
+		
 	} else if (strncmp(buff, SYNACK_CMD, strlen(SYNACK_CMD)) == 0) {
 		std::cout << "Connected to " << _destIP << ":" << _destPort << std::endl;
 		return true;

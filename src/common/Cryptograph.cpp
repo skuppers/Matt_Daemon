@@ -11,7 +11,7 @@ Cryptograph::Cryptograph(bool rsa) : _useRSA(rsa)
 {
     init();
     if (_useRSA)
-        initRSA();
+        ;//initRSA();
     else
         initAES();
     return ;
@@ -33,6 +33,8 @@ int Cryptograph::deInit(void) {
 
     /* Remove error strings */
     ERR_free_strings();
+
+    return 0;
 }
 
 int Cryptograph::init(void) {
@@ -44,7 +46,9 @@ int Cryptograph::init(void) {
     OpenSSL_add_all_algorithms();
 
     /* Load empty config file, to set defaults */
-    OPENSSL_config(NULL);
+    CONF_modules_load(NULL, NULL, 0);
+
+    return 0;
 }
 
 int Cryptograph::initAES(void) {
