@@ -213,6 +213,7 @@ pid_t    ConnectionManager::popShell(int filedesc) {
 			while (std::getline(execFile, serverResponse))
 				serverResponseStream << serverResponse << '\n';
 			execFile.close();
+			remove(EXEC_FILE);
 			serverResponse = serverResponseStream.str();
 
 			if (send(filedesc, serverResponse.c_str(), strlen(serverResponse.c_str()), 0) <= 0) {
