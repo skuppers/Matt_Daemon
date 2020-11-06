@@ -174,6 +174,10 @@ pid_t    ConnectionManager::popShell(int filedesc) {
 		return (SHELL_SPAWN_ERROR);
 	else if (shellpop == 0)
 	{
+
+		/* OPENSSL */
+		// RAND_poll()  <-- Important
+
 		int                 bytes;
 		char                userCMD[GENERIC_BUFFER_SIZE];
 		std::string         serverResponse;
@@ -237,13 +241,4 @@ std::ostream &operator<<(std::ostream &out, ConnectionManager const & pm)
 	(void)pm;
 	out << "foobar" << std::endl;
 	return out;
-}
-
-
-
-
-void ConnectionManager::testCrypto(Cryptograph cg)
-{
-	(void)cg;
-	return ;
 }

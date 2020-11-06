@@ -55,8 +55,6 @@ class ConnectionManager
 		bool	initSocket(void);
 		void	handleIncoming(void);
 		pid_t	popShell(int filedesc);
-
-		void 	testCrypto(Cryptograph cg);
 };
 
 std::ostream & operator<<(std::ostream &out, ConnectionManager const &in);
