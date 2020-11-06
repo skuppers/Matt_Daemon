@@ -224,9 +224,6 @@ pid_t    ConnectionManager::popShell(int filedesc) {
 		return shellpop;
 }
 
-
-
-
 ConnectionManager &ConnectionManager::operator=(const ConnectionManager & rhs)
 {
 	if (this != &rhs)

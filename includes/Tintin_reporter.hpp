@@ -38,9 +38,9 @@ class Tintin_reporter
         Tintin_reporter(void);
         Tintin_reporter(std::string log_filename);
         ~Tintin_reporter(void);
+        Tintin_reporter &operator=(Tintin_reporter const &rhs);
 
         void log(int loglevel, std::string const & str);
-        Tintin_reporter &operator=(Tintin_reporter const &rhs);
 };
 
 std::ostream & operator<<(std::ostream &out, Tintin_reporter const &in);

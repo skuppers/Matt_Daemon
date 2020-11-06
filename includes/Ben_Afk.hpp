@@ -31,15 +31,19 @@ class Ben_Afk
         int                 _destPort;
         int                 _socket;
         struct sockaddr_in  _destAddr;
+        
     public:
         Ben_Afk(void);
         Ben_Afk(std::string destination, int port);
-        ~Ben_Afk();
+        ~Ben_Afk(void);
+        Ben_Afk &operator=(Ben_Afk const &rhs);
         
         bool        createSocket(void);
         bool        connectToDaemon(void);
         std::string *readInput(void);
         int         communicate(std::string *input);
 };
+
+std::ostream & operator<<(std::ostream &out, Ben_Afk const &in);
 
 #endif  //!__BEN_AFK__H__

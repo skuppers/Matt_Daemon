@@ -127,3 +127,17 @@ int        Ben_Afk::communicate(std::string *input) {
 	delete input;
 	return true;
 }
+
+Ben_Afk &Ben_Afk::operator=(const Ben_Afk & rhs)
+{
+	if (this != &rhs)
+		*this = rhs;
+	return *this;
+}
+
+std::ostream &operator<<(std::ostream &out, Ben_Afk const & pm)
+{
+	(void)pm;
+	out << "foobar" << std::endl;
+	return out;
+}

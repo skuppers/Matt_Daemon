@@ -47,13 +47,13 @@ class ConnectionManager
 
 	public:
     	ConnectionManager(void);
-		ConnectionManager(Tintin_reporter	*logger);
+		ConnectionManager(Tintin_reporter *logger);
     	~ConnectionManager(void);
+		ConnectionManager &operator=(ConnectionManager const &rhs);
 
 		bool	initSocket(void);
 		void	handleIncoming(void);
 		pid_t	popShell(int filedesc);
-		ConnectionManager &operator=(ConnectionManager const &rhs);
 };
 
 std::ostream & operator<<(std::ostream &out, ConnectionManager const &in);
