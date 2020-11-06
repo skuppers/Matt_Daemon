@@ -44,13 +44,16 @@ I_INCLUDES += -I $(INCLUDES_MATT)
 
 vpath %.hpp $(INCLUDES_MATT)
 
-COMMON_HEADER += Cryptograph.hpp
+# Common
+HEADERS += Cryptograph.hpp
 
-SERVER_HEADER += general.hpp
-SERVER_HEADER += PolicyManager.hpp
-SERVER_HEADER += ConnectionManager.hpp
+# Daemon
+HEADERS += general.hpp
+HEADERS += PolicyManager.hpp
+HEADERS += ConnectionManager.hpp
 
-CLIENT_HEADER += Ben_Afk.hpp
+# Client
+HEADERS += Ben_Afk.hpp
 
 #----------------------------------- SOURCES ---------------------------------#
 
@@ -74,10 +77,10 @@ CLIENT_DIR = $(SOURCE_DIR)client/
 CLIENT_SRCS += Ben_Afk.cpp
 CLIENT_SRCS += client.cpp
 
-
+vpath %.cpp $(COMMON_DIR)
 vpath %.cpp $(SERVER_DIR)
 vpath %.cpp $(CLIENT_DIR)
-vpath %.cpp $(COMMON_DIR)
+
 
 #----------------------------------- OBJECTS ----------------------------------#
 
@@ -89,23 +92,25 @@ COMMON_OBJS = $(patsubst %.cpp, $(PATH_OBJS)%.o, $(COMMON_SRCS))
 
 #---------------------------------- THA RULES ---------------------------------#
 
-all: $(PATH_OBJS) $(SERVER) $(CLIENT)
+all: $(SERVER) $(CLIENT)
 
-$(SERVER): $(COMMON_OBJS) $(SERVER_OBJS)
-	$(CC) $(CFLAGS) $(I_INCLUDES) $(SERVER_OBJS) $(LIB) -o $@
+$(SERVER): $(PATH_OBJS) $(SERVER_OBJS) $(COMMON_OBJS) 
+	$(CC) $(CFLAGS) $(I_INCLUDES) $(SERVER_OBJS) $(COMMON_OBJS) $(LIB) -o $@
 	printf "$@ is ready.\n"
 
-$(CLIENT): $(COMMON_OBJS) $(CLIENT_OBJS)
-	$(CC) $(CFLAGS) $(I_INCLUDES) $(CLIENT_OBJS) $(LIB) -o $@
+$(SERVER_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADERS) Makefile
+	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
+
+
+$(CLIENT): $(PATH_OBJS) $(CLIENT_OBJS) $(COMMON_OBJS) 
+	$(CC) $(CFLAGS) $(I_INCLUDES) $(CLIENT_OBJS) $(COMMON_OBJS) $(LIB) -o $@
 	printf "$@ is ready.\n"
 
-$(SERVER_OBJS): $(PATH_OBJS)%.o: %.cpp $(SERVER_HEADER) Makefile
+$(CLIENT_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADERS) Makefile
 	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
 
-$(CLIENT_OBJS): $(PATH_OBJS)%.o: %.cpp $(CLIENT_HEADER) Makefile
-	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
 
-$(COMMON_OBJS): $(PATH_OBJS)%.o: %.cpp $(COMMON_HEADER) Makefile
+$(COMMON_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADERS) Makefile
 	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
 
 $(PATH_OBJS):

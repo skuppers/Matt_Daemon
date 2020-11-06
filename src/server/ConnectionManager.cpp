@@ -238,3 +238,12 @@ std::ostream &operator<<(std::ostream &out, ConnectionManager const & pm)
 	out << "foobar" << std::endl;
 	return out;
 }
+
+
+
+/*
+void ConnectionManager::testCrypto(Cryptograph cg)
+{
+	(void)cg;
+	return ;
+}*/

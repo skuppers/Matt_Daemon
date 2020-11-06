@@ -1,6 +1,7 @@
 #include "PolicyManager.hpp"
 #include "Tintin_reporter.hpp"
 #include "ConnectionManager.hpp"
+#include "Cryptograph.hpp"
 #include "general.hpp"
 
 extern Tintin_reporter *g_reporter;
@@ -39,7 +40,13 @@ int		main(void)
 
 	//daemonize(&logger);
 	
+	Cryptograph cg;
+
+
 	ConnectionManager conmgr(&logger);
+
+	//conmgr.testCrypto(cg);
+
 	if (conmgr.initSocket()) 
 		conmgr.handleIncoming();
     
