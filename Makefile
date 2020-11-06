@@ -8,6 +8,8 @@ CC=clang++
 CFLAGS += -Wall
 CFLAGS += -Wextra
 
+LIB += -lcrypto
+
 # Compiler Debug Flags
 ifeq ($(d), 0)
 	CFLAGS += -g3
@@ -31,15 +33,18 @@ endif
 # Debug Dir
 DSYM += $(NAME).dSYM
 DSYM += $(DBNAME).dSYM
+
 #---------------------------------- INCLUDES ----------------------------------#
 
-INCLUDES_TRACEROUTE = includes/
+INCLUDES_MATT = includes/
 
-I_INCLUDES += -I $(INCLUDES_TRACEROUTE)
+I_INCLUDES += -I $(INCLUDES_MATT)
 
 #---------------------------------- HEADERS -----------------------------------#
 
-vpath %.hpp $(INCLUDES_TRACEROUTE)
+vpath %.hpp $(INCLUDES_MATT)
+
+COMMON_HEADER += Cryptograph.hpp
 
 SERVER_HEADER += general.hpp
 SERVER_HEADER += PolicyManager.hpp
@@ -49,7 +54,13 @@ CLIENT_HEADER += Ben_Afk.hpp
 
 #----------------------------------- SOURCES ---------------------------------#
 
-SERVER_DIR = server/
+SOURCE_DIR = src/
+
+COMMON_DIR = $(SOURCE_DIR)common/
+
+COMMON_SRC += Cryptograph.cpp
+
+SERVER_DIR = $(SOURCE_DIR)server/
 
 SERVER_SRCS += Matt_daemon.cpp
 SERVER_SRCS += signals.cpp
@@ -58,7 +69,7 @@ SERVER_SRCS += PolicyManager.cpp
 SERVER_SRCS += ConnectionManager.cpp
 
 
-CLIENT_DIR = client/
+CLIENT_DIR = $(SOURCE_DIR)client/
 
 CLIENT_SRCS += Ben_Afk.cpp
 CLIENT_SRCS += client.cpp
@@ -66,30 +77,35 @@ CLIENT_SRCS += client.cpp
 
 vpath %.cpp $(SERVER_DIR)
 vpath %.cpp $(CLIENT_DIR)
+vpath %.cpp $(COMMON_DIR)
 
 #----------------------------------- OBJECTS ----------------------------------#
 
 PATH_OBJS = objs/
 SERVER_OBJS = $(patsubst %.cpp, $(PATH_OBJS)%.o, $(SERVER_SRCS))
 CLIENT_OBJS = $(patsubst %.cpp, $(PATH_OBJS)%.o, $(CLIENT_SRCS))
+COMMON_OBJS = $(patsubst %.cpp, $(PATH_OBJS)%.o, $(COMMON_SRCS))
 
 
 #---------------------------------- THA RULES ---------------------------------#
 
 all: $(PATH_OBJS) $(SERVER) $(CLIENT)
 
-$(SERVER): $(SERVER_OBJS)
-	$(CC) $(CFLAGS) $(I_INCLUDES) $(SERVER_OBJS)  -o $@
+$(SERVER): $(COMMON_OBJS) $(SERVER_OBJS)
+	$(CC) $(CFLAGS) $(I_INCLUDES) $(SERVER_OBJS) $(LIB) -o $@
 	printf "$@ is ready.\n"
 
-$(CLIENT): $(CLIENT_OBJS)
-	$(CC) $(CFLAGS) $(I_INCLUDES) $(CLIENT_OBJS)  -o $@
+$(CLIENT): $(COMMON_OBJS) $(CLIENT_OBJS)
+	$(CC) $(CFLAGS) $(I_INCLUDES) $(CLIENT_OBJS) $(LIB) -o $@
 	printf "$@ is ready.\n"
 
 $(SERVER_OBJS): $(PATH_OBJS)%.o: %.cpp $(SERVER_HEADER) Makefile
 	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
 
 $(CLIENT_OBJS): $(PATH_OBJS)%.o: %.cpp $(CLIENT_HEADER) Makefile
+	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
+
+$(COMMON_OBJS): $(PATH_OBJS)%.o: %.cpp $(COMMON_HEADER) Makefile
 	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
 
 $(PATH_OBJS):
