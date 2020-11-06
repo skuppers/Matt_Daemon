@@ -58,7 +58,8 @@ std::string *Ben_Afk::readInput(void) {
 	std::getline(std::cin, *input);
 	if (!std::cin) {
 		std::cout << std::endl << "Exiting." << std::endl;
-		exit(42);
+		delete input;
+		return nullptr;
 	}
 	return input;
 }
@@ -74,6 +75,7 @@ int        Ben_Afk::communicate(std::string *input) {
 	if (input->compare(QUIT_CMD) == 0 || input->compare(EXIT_CMD) == 0)
 	{
 		std::cout << "Matt_daemon is shutting down." << std::endl;
+		delete input;
 		return false;
 	}
 	else if (input->compare(SHELL_CMD) == 0)
@@ -86,11 +88,13 @@ int        Ben_Afk::communicate(std::string *input) {
 		if ((bytes = recv(_socket, serverResponse, GENERIC_BUFFER_SIZE - 1, 0)) <= 0)
 		{
 			std::cerr << "Error spawning shell. Quitting." << std::endl;
+			delete input;
 			return false;
 		}
 		serverResponse[bytes] = 0;
 		fputs(serverResponse, stdout);
 
+		delete input;
 		while (1)
 		{
 			std::cout << SHELL_PS2;
@@ -98,23 +102,20 @@ int        Ben_Afk::communicate(std::string *input) {
 			if (!std::cin) {
 				std::cout << std::endl << "Exiting." << std::endl;
 				send(_socket, DISCONNECT_CMD, strlen(DISCONNECT_CMD), 0);
-				exit(42);
+				return false;
 			}
 			if (shellCMD.length() == 0)
 				continue ;
 			if (send(_socket, shellCMD.c_str(), strlen(shellCMD.c_str()), 0) <= 0) {
 				std::cerr << "Error sending command. Quitting shell." << std::endl;
-				delete input;
 				return false ;
 			}
 			if ((bytes = recv(_socket, serverResponse, 4096, 0)) <= 0) {
 				std::cerr << "Error receiving shell response. Quitting shell." << std::endl;
-				delete input;
 				return false ;
 			}
 			serverResponse[bytes] = 0;
 			if (strncmp(serverResponse, EXIT_CMD, strlen(EXIT_CMD)) == 0) {
-				delete input;
 				return false ;
 			} else if (strncmp(serverResponse, EXEC_ERROR_CMD, strlen(EXEC_ERROR_CMD)) == 0) {
 				std::cerr << "Error executing command." << std::endl;

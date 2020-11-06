@@ -15,6 +15,7 @@ ConnectionManager::ConnectionManager(Tintin_reporter *logger) : _logger(logger)
 ConnectionManager::~ConnectionManager(void)
 {
 	// destruct/unbind/unlink socket & stuff
+	close(_listeningSocket);
 	return ;
 }
 
