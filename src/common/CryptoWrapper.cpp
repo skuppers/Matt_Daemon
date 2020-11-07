@@ -55,7 +55,6 @@ int CryptoWrapper::recvEncrypted(int sockfd, char **decrypt_buffer) {
 	if (receivedBytes <= 0) 
 		return receivedBytes;
 
-	printf("Received bytes: %lu\n", receivedBytes);
 	/* Decrypt the message with the cryptograph */
 	decryptedMessageLength = _cryptograph.AESDecrypt((unsigned char*)encryptedMessageBuffer,
 														receivedBytes, (unsigned char **)decrypt_buffer);

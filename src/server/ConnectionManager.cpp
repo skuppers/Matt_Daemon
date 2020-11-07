@@ -97,8 +97,9 @@ bool	ConnectionManager::authClient(int clientFD, char **username) {
 }
 
 int     ConnectionManager::acceptNewClients(void) {
-	int 	newfd;
-	char	*clientName;
+	int 		newfd;
+	char		*clientName = NULL;
+	std::string clientNameString;
 
 	/* Accept TCP connection */
 	_logger->log(LOGLVL_INFO, "A new client is trying to connect.");
@@ -125,15 +126,18 @@ int     ConnectionManager::acceptNewClients(void) {
 
 		/* Delay for fixing a weird send/recv & libcrypto bug */
 		/* This is probably due to the daemon sending the connection confirmation   */
-		/* and right after the authentication requests, while the client interprets */
-		/* those two request as a single one, which fucks up the decryption process */
+		/* right after the authentication requests, while the client interprets     */
+		/* those two request as a single one, which fucks up the decryption buffer  */
 		sleep(1);
 
 		/* Client authentication process */
 		_logger->log(LOGLVL_INFO, "Authenticating client.");
 		if (!authClient(newfd, &clientName))
 		{
-			_logger->log(LOGLVL_WARN, "Authentication failed for client \'" + std::string(clientName) + "\'. Closing connection.");
+			(clientName == NULL) ? clientNameString = std::string("undefined") : clientNameString = std::string(clientName);
+			if (clientName != NULL)
+				free(clientName);
+			_logger->log(LOGLVL_WARN, "Authentication failed for client \'" + clientNameString + "\'. Closing connection.");
 			close(newfd);
 			return (-1);
 		}
@@ -141,9 +145,16 @@ int     ConnectionManager::acceptNewClients(void) {
 		/* Same as above */
 		sleep(1);
 
-		/* Success, log it, and send over the server banner */
-		_cryptoWrapper->sendEncrypted(newfd, SERVER_BANNER, strlen(SERVER_BANNER));
+		/* Log authentication success */
 		_logger->log(LOGLVL_INFO, "Client \'" + std::string(clientName) + "\' successfully authenticated.");
+
+	/* TODO client class */
+	/* clientname must be at least 1 char long */
+	free(clientName);
+
+		/* Send over server banner */
+		_cryptoWrapper->sendEncrypted(newfd, SERVER_BANNER, strlen(SERVER_BANNER));
+		
 		return (newfd);
 	}
 }

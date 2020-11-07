@@ -47,7 +47,7 @@ bool	Ben_Afk::authenticate(int fd) {
 
 	/* Prompt username & send it back */
 	std::string *username = readInput(false);
-	if (_cryptoWrapper->sendEncrypted(fd, username->c_str(), username->length()) <= 0)
+	if (username == nullptr || _cryptoWrapper->sendEncrypted(fd, username->c_str(), username->length()) <= 0)
 		return (false);
 	delete username;
 
@@ -60,7 +60,7 @@ bool	Ben_Afk::authenticate(int fd) {
 
 	/* Prompt password & send it back */
 	std::string *password = readInput(false);
-	if (_cryptoWrapper->sendEncrypted(fd, password->c_str(), password->length()) <= 0)
+	if (password == nullptr || _cryptoWrapper->sendEncrypted(fd, password->c_str(), password->length()) <= 0)
 		return (false);
 	delete password;
 
