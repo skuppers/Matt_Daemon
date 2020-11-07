@@ -11,11 +11,13 @@
 
 #define DFLT_LOGFILE_DIR	"/var/log/matt_daemon/"
 
-#define LOG_INFO "[INFO]"
-#define LOG_WARN "[WARN]"
-#define LOG_ERROR "[ERROR]"
+#define LOG_INFO 	"[ INFO ]"
+#define LOG_WARN 	"[ WARN ]"
+#define LOG_ERROR 	"[ ERROR ]"
+#define LOG_LOG		"[ LOG ]"
 
 static const char *LogLevel[] {
+	LOG_LOG,
     LOG_INFO,
     LOG_WARN,
     LOG_ERROR
@@ -23,9 +25,10 @@ static const char *LogLevel[] {
 
 enum LogLevel
 {
-    LOGLVL_INFO = 0,
-    LOGLVL_WARN = 1,
-    LOGLVL_ERROR = 2
+	LOGLVL_LOG = 0,
+    LOGLVL_INFO = 1,
+    LOGLVL_WARN = 2,
+    LOGLVL_ERROR = 3
 };
 
 class Tintin_reporter
