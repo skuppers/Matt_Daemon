@@ -1,12 +1,12 @@
 .SUFFIXES:
 
-SERVER=Matt_daemon
+SERVER=matt_daemon
 CLIENT=BEN_AFK
 
 CC = clang++
 
 CFLAGS += -Wall
-CFLAGS += -Wextra -fsanitize=address
+CFLAGS += -Wextra
 CFLAGS += -D _GNU_SOURCE
 
 LIBCRYPTO += -lcrypto

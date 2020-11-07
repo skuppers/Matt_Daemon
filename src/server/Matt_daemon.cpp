@@ -5,7 +5,8 @@
 #include "CryptoWrapper.hpp"
 #include "general.hpp"
 
-extern Tintin_reporter *g_reporter;
+extern Tintin_reporter	*g_reporter;
+bool					g_signalTerminate;
 
 void	daemonize(Tintin_reporter *reporter)
 {
@@ -36,14 +37,15 @@ int		main(void)
 
     Tintin_reporter logger(DFLT_LOGFILE);		// Make logfile append mode
 	g_reporter = &logger;
-    
+
+    g_signalTerminate = false;
     init_signal_handler();
 
 	//daemonize(&logger);
 	
 	Cryptograph 	cg;
 	CryptoWrapper 	cw(cg);
-
+	
 	ConnectionManager conmgr(&logger, &cw);
 	if (conmgr.initSocket()) 
 		conmgr.handleIncoming();

@@ -1,4 +1,7 @@
 #include "ConnectionManager.hpp"
+#include "general.hpp"
+
+//bool			g_signalTerminate;
 
 ConnectionManager::ConnectionManager(void)
 {
@@ -97,7 +100,7 @@ void    ConnectionManager::handleIncoming(void) {
 	FD_ZERO(&master_set);
 	FD_SET(_listeningSocket, &master_set);
 
-	while (true)
+	while (!g_signalTerminate)
 	{
 		
 		tv.tv_sec = 1;

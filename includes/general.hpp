@@ -11,6 +11,8 @@
 #define LOCAL_LOCKFILE      	"matt_daemon.lock"
 #define LOCAL_LOGFILE_PATH  	"matt_daemon.log"
 
-void init_signal_handler(void);
+extern bool				g_signalTerminate;
+
+void                    init_signal_handler(void);
 
 #endif  //!__GENERAL__H__
