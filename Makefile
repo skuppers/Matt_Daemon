@@ -35,6 +35,20 @@ endif
 DSYM += $(NAME).dSYM
 DSYM += $(DBNAME).dSYM
 
+
+#------------------------------- AUTHENTICATION -------------------------------#
+
+DEFAULT_AUTHENTICATION_PASSWORD="42born2code"
+
+ifneq ($(password),)
+	CFLAGS += "-DAUTH_PASSWORD=\"$(password)\""
+else
+	CFLAGS += "-DAUTH_PASSWORD=\"$(DEFAULT_AUTHENTICATION_PASSWORD)\""
+endif
+
+#--------------------------------- AES / RSA ----------------------------------#
+
+
 #---------------------------------- INCLUDES ----------------------------------#
 
 INCLUDES_MATTDAEMON = includes/
