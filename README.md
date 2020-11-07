@@ -14,7 +14,10 @@ Todo Checklist:
     - [x] Handle client communication
     - [x] Exit on 'quit' message
     - [x] Max 3 clients
-    - [ ] Crypt communications (RSA / ECDSA / AES ?)
+    - [ ] Crypt communications (Verify error handling)
+      - [x] AES 
+      - [ ] RSA
+      - [ ] Make PBKDF password & salt modifiable in makefile
  - [x] Client
     - [x] Basic prompt
     - [x] Pop a shell (/bin/sh)
