@@ -18,7 +18,7 @@ class CryptoWrapper
 		CryptoWrapper &operator=(CryptoWrapper const &rhs);
 
 		int		sendEncrypted(int sockfd, const void *buf, size_t len);
-		int		recvEncrypted(int sockfd, void *buf, size_t len);
+		int		recvEncrypted(int sockfd, char **decrypt_buffer, size_t len);
 };
 
 std::ostream & operator<<(std::ostream &out, CryptoWrapper const &in);

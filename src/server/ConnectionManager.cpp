@@ -69,9 +69,10 @@ int     ConnectionManager::acceptNewClients(void) {
 	if ((newfd = accept(_listeningSocket, NULL, NULL)) == -1) {
 		_logger->log(LOGLVL_ERROR, "Error accepting client connection.");
 		return (-1);
-	} else {
-		if (_activeClients >= MAX_CLIENTS)
-		{
+	}
+	else
+	{
+		if (_activeClients >= MAX_CLIENTS) {
 			_logger->log(LOGLVL_WARN, "A client tried to connect, but no slot is avaible.");
 
 			_cryptoWrapper->sendEncrypted(newfd, RST_CMD, strlen(RST_CMD));

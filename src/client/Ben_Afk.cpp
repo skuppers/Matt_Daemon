@@ -39,9 +39,8 @@ bool    Ben_Afk::connectToDaemon(void) {
 		std::cerr << "Error connecting to " << _destIP << ":" << _destPort << std::endl;
 		return false;
 	}
-	char buff[CONNECT_BUFF_SIZE];
-	bzero(buff, CONNECT_BUFF_SIZE);
 
+	char *buff = NULL;
 	_cryptoWrapper->recvEncrypted(_socket, &buff, CONNECT_BUFF_SIZE);
 
 	if (strncmp(buff, RST_CMD, strlen(RST_CMD)) == 0) {
@@ -52,6 +51,8 @@ bool    Ben_Afk::connectToDaemon(void) {
 		std::cout << "Connected to " << _destIP << ":" << _destPort << std::endl;
 		return true;
 	}
+	
+	std::cerr << "Fatal connection error.\n" << std::endl;
 	return false;
 }
 

@@ -6,7 +6,7 @@ CLIENT=BEN_AFK
 CC = clang++
 
 CFLAGS += -Wall
-CFLAGS += -Wextra #-fsanitize=address
+CFLAGS += -Wextra -fsanitize=address
 CFLAGS += -D _GNU_SOURCE
 
 LIBCRYPTO += -lcrypto

@@ -11,7 +11,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#define CONNECT_BUFF_SIZE   16
+#define CONNECT_BUFF_SIZE   32
 #define GENERIC_BUFFER_SIZE	4096
 
 #define SHELL_PS1           "Ben_Afk> "
