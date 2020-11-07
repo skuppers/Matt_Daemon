@@ -22,4 +22,4 @@ Todo Checklist:
     - [x] Basic prompt
     - [x] Pop a shell (/bin/sh)
     - [ ] Download daemon logs
-    - [ ] Authentication
+    - [x] Authentication
