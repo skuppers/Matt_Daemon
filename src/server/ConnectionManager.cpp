@@ -66,25 +66,84 @@ void    ConnectionManager::handleShellDisconnect(void) {
 	}
 }
 
-int     ConnectionManager::acceptNewClients(void) {
-	int newfd;
+bool	ConnectionManager::authClient(int clientFD, char **username) {
+	char *password = NULL;
 
+	/* Ask for username */
+	if (_cryptoWrapper->sendEncrypted(clientFD, USERNAME_STR, strlen(USERNAME_STR)) <= 0)
+		return (false);
+	/* Receive and store username */
+	if (_cryptoWrapper->recvEncrypted(clientFD, username) <= 0)
+		return (false);
+
+	/* Ask for password */
+	if (_cryptoWrapper->sendEncrypted(clientFD, PASSWORD_STR, strlen(PASSWORD_STR)) <= 0)
+		return (false);
+	/* Receive and store password */
+	if (_cryptoWrapper->recvEncrypted(clientFD, &password) <= 0)
+		return (false);
+
+	/* Verify user password with makefile defined password */
+#ifdef  AUTH_PASSWORD
+	if (strncmp(password, AUTH_PASSWORD, strlen(AUTH_PASSWORD)) == 0) {
+		free(password);
+		_cryptoWrapper->sendEncrypted(clientFD, VALIDATE_AUTHENTICATION, strlen(VALIDATE_AUTHENTICATION));
+		return (true);
+	}
+#endif
+	free(password);
+	_cryptoWrapper->sendEncrypted(clientFD, DENY_AUTHENTICATION, strlen(DENY_AUTHENTICATION));
+	return false;
+}
+
+int     ConnectionManager::acceptNewClients(void) {
+	int 	newfd;
+	char	*clientName;
+
+	/* Accept TCP connection */
+	_logger->log(LOGLVL_INFO, "A new client is trying to connect.");
 	if ((newfd = accept(_listeningSocket, NULL, NULL)) == -1) {
 		_logger->log(LOGLVL_ERROR, "Error accepting client connection.");
 		return (-1);
 	}
 	else
 	{
+		/* Ensure that no more than 3 clients can connect simultaneously */
 		if (_activeClients >= MAX_CLIENTS) {
 			_logger->log(LOGLVL_WARN, "A client tried to connect, but no slot is avaible.");
-
 			_cryptoWrapper->sendEncrypted(newfd, RST_CMD, strlen(RST_CMD));
-
 			close(newfd);
 			return (-1);
 		}
 
-		_cryptoWrapper->sendEncrypted(newfd, SYNACK_CMD, strlen(SYNACK_CMD));
+		/* Confirm connection to client */
+		if (_cryptoWrapper->sendEncrypted(newfd, SYNACK_CMD, strlen(SYNACK_CMD)) <= 0) {
+			_logger->log(LOGLVL_ERROR, "Client connection could not be confirmed.");
+			close(newfd);
+			return (-1);
+		}
+
+		/* Delay for fixing a weird send/recv & libcrypto bug */
+		/* This is probably due to the daemon sending the connection confirmation   */
+		/* and right after the authentication requests, while the client interprets */
+		/* those two request as a single one, which fucks up the decryption process */
+		sleep(1);
+
+		/* Client authentication process */
+		_logger->log(LOGLVL_INFO, "Authenticating client.");
+		if (!authClient(newfd, &clientName))
+		{
+			_logger->log(LOGLVL_WARN, "Authentication failed for client \'" + std::string(clientName) + "\'. Closing connection.");
+			close(newfd);
+			return (-1);
+		}
+
+		/* Same as above */
+		sleep(1);
+
+		/* Success, log it, and send over the server banner */
+		_cryptoWrapper->sendEncrypted(newfd, SERVER_BANNER, strlen(SERVER_BANNER));
+		_logger->log(LOGLVL_INFO, "Client \'" + std::string(clientName) + "\' successfully authenticated.");
 		return (newfd);
 	}
 }
@@ -122,7 +181,7 @@ void    ConnectionManager::handleIncoming(void) {
 						continue ;
 					FD_SET(newfd, &master_set);
 					++_activeClients;
-					_logger->log(LOGLVL_INFO, "New client connection.");
+					//_logger->log(LOGLVL_INFO, "New client connection.");
 				}
 				else
 				{
@@ -130,7 +189,7 @@ void    ConnectionManager::handleIncoming(void) {
 
 
 		char	*recvInput = NULL;
-		if ((readBytes = _cryptoWrapper->recvEncrypted(currentFD, &recvInput, INPUT_BUFFER_SIZE)) <= 0) {						
+		if ((readBytes = _cryptoWrapper->recvEncrypted(currentFD, &recvInput)) <= 0) {						
 						if (readBytes == 0)
 							_logger->log(LOGLVL_INFO, "A client disconnected.");
 						else
@@ -195,7 +254,7 @@ pid_t    ConnectionManager::popShell(int filedesc) {
 		}
 		while (1)
 		{
-			if ((bytes = _cryptoWrapper->recvEncrypted(filedesc, &userCMD, GENERIC_BUFFER_SIZE)) <= 0) {
+			if ((bytes = _cryptoWrapper->recvEncrypted(filedesc, &userCMD)) <= 0) {
 				exit(EXIT_FAILURE);
 			}
 			if (strncmp(userCMD, QUIT_CMD, strlen(QUIT_CMD)) == 0

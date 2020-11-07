@@ -22,7 +22,7 @@ int main(int ac, char **av)
     if (benny.createSocket() && benny.connectToDaemon())
     {
         while (1) {
-            if ((userInput = benny.readInput()) == nullptr)
+            if ((userInput = benny.readInput(true)) == nullptr)
                 break ;
             if (benny.communicate(userInput) == false)
                 break ;

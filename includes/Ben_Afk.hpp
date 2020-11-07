@@ -11,8 +11,6 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#define CONNECT_BUFF_SIZE   32
-#define GENERIC_BUFFER_SIZE	4096
 
 #define SHELL_PS1           "Ben_Afk> "
 #define SHELL_PS2           "$ "
@@ -42,7 +40,8 @@ class Ben_Afk
         
         bool            createSocket(void);
         bool            connectToDaemon(void);
-        std::string     *readInput(void);
+        bool            authenticate(int fd);
+        std::string     *readInput(bool printShell);
         int             communicate(std::string *input);
 };
 

@@ -44,17 +44,18 @@ int	CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 	return encryptedMessageLength;
 }
 
-int CryptoWrapper::recvEncrypted(int sockfd, char **decrypt_buffer, size_t len) {
+int CryptoWrapper::recvEncrypted(int sockfd, char **decrypt_buffer) {
 	int 			decryptedMessageLength;
-	char			encryptedMessageBuffer[len];
+	char			encryptedMessageBuffer[GENERIC_BUFFER_SIZE]; // allocate those
 	size_t			receivedBytes;
 
 	/* Receive the encrypted message */
-	bzero(encryptedMessageBuffer, len);
-	receivedBytes = recv(sockfd, encryptedMessageBuffer, len - 1, 0);
+	bzero(encryptedMessageBuffer, GENERIC_BUFFER_SIZE);
+	receivedBytes = recv(sockfd, encryptedMessageBuffer, GENERIC_BUFFER_SIZE - 1, 0);
 	if (receivedBytes <= 0) 
 		return receivedBytes;
 
+	printf("Received bytes: %lu\n", receivedBytes);
 	/* Decrypt the message with the cryptograph */
 	decryptedMessageLength = _cryptograph.AESDecrypt((unsigned char*)encryptedMessageBuffer,
 														receivedBytes, (unsigned char **)decrypt_buffer);
