@@ -74,7 +74,6 @@ std::string *Ben_Afk::readInput(void) {
 int        Ben_Afk::communicate(std::string *input) {
 
 	if (_cryptoWrapper->sendEncrypted(_socket, input->c_str(), strlen(input->c_str())) < 0) {
-	//if (send(_socket, input->c_str(), strlen(input->c_str()), 0) < 0) {
 		std::cerr << "Error sending data!. Quitting." << std::endl;
 		delete input;
 		return false ;
@@ -86,23 +85,27 @@ int        Ben_Afk::communicate(std::string *input) {
 		delete input;
 		return false;
 	}
-	else if (input->compare(SHELL_CMD) == 0) //TODO
+	else if (input->compare(SHELL_CMD) == 0)
 	{
 		int         bytes;
 		std::string shellCMD;
-//		char        serverResponse[GENERIC_BUFFER_SIZE];
 		char		*serverResponse = NULL;		
-//		bzero(serverResponse, GENERIC_BUFFER_SIZE);
+
 		if ((bytes = _cryptoWrapper->recvEncrypted(_socket, &serverResponse, GENERIC_BUFFER_SIZE)) <= 0)
 		{
 			std::cerr << "Error spawning shell. Quitting." << std::endl;
+			if (serverResponse != NULL)
+				free(serverResponse);
 			delete input;
 			return false;
 		}
-		serverResponse[bytes] = 0;
-		fputs(serverResponse, stdout);
 
+//		serverResponse[bytes] = 0;
+		fputs(serverResponse, stdout);
+		free(serverResponse);
+		serverResponse = NULL;
 		delete input;
+
 		while (1)
 		{
 			std::cout << SHELL_PS2;
@@ -122,14 +125,17 @@ int        Ben_Afk::communicate(std::string *input) {
 				std::cerr << "Error receiving shell response. Quitting shell." << std::endl;
 				return false ;
 			}
-			serverResponse[bytes] = 0;
+//			serverResponse[bytes] = 0;
 			if (strncmp(serverResponse, EXIT_CMD, strlen(EXIT_CMD)) == 0) {
+				free(serverResponse);
 				return false ;
 			} else if (strncmp(serverResponse, EXEC_ERROR_CMD, strlen(EXEC_ERROR_CMD)) == 0) {
 				std::cerr << "Error executing command." << std::endl;
+				free(serverResponse);
 				continue ;
 			}
 			fputs(serverResponse, stdout);
+			free(serverResponse);
 		}
 	}
 	

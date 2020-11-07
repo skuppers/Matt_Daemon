@@ -127,9 +127,7 @@ void    ConnectionManager::handleIncoming(void) {
 
 
 		char	*recvInput = NULL;
-		if ((readBytes = _cryptoWrapper->recvEncrypted(currentFD, &recvInput, INPUT_BUFFER_SIZE)) <= 0) {
-//					if ((readBytes = recv(currentFD, userInput, INPUT_BUFFER_SIZE - 1, 0)) <= 0) {
-						
+		if ((readBytes = _cryptoWrapper->recvEncrypted(currentFD, &recvInput, INPUT_BUFFER_SIZE)) <= 0) {						
 						if (readBytes == 0)
 							_logger->log(LOGLVL_INFO, "A client disconnected.");
 						else
@@ -141,22 +139,22 @@ void    ConnectionManager::handleIncoming(void) {
 					}
 					else
 					{
-//						userInput[readBytes] = '\0';
-//						userInput[strcspn(userInput, "\n")] = '\0';
 
 						if (strncmp(recvInput, QUIT_CMD, strlen(QUIT_CMD)) == 0
-							|| strncmp(recvInput, EXIT_CMD, strlen(EXIT_CMD)) == 0)
+							|| strncmp(recvInput, EXIT_CMD, strlen(EXIT_CMD)) == 0) {
+							free(recvInput);
 							return ;
+						}
 
 						if (strncmp(recvInput, SHELL_CMD, strlen(SHELL_CMD)) == 0)
 						{
-							//TODO
 							if ((shell_pid = this->popShell(currentFD)) == SHELL_SPAWN_ERROR) {
 								_logger->log(LOGLVL_ERROR, "Shell spawn error");
 								close(currentFD);
 								FD_CLR(currentFD, &master_set);
 								--_activeClients;
 								_logger->log(LOGLVL_INFO, "Client disconnected due to shell spawn error.");
+								free(recvInput);
 								continue ;
 							}
 							_childsPIDs.push_back(shell_pid);
@@ -164,9 +162,9 @@ void    ConnectionManager::handleIncoming(void) {
 							FD_CLR(currentFD, &master_set);
 						}
 						else
-							_logger->log(LOGLVL_INFO, "Received client data: \"" + std::string(recvInput) + "\"");
+							_logger->log(LOGLVL_LOG, "Received client data: \"" + std::string(recvInput) + "\"");
 					}
-					//TODO delete recvInput
+					free(recvInput);
 				}
 			} 
 		}
@@ -181,19 +179,15 @@ pid_t    ConnectionManager::popShell(int filedesc) {
 		return (SHELL_SPAWN_ERROR);
 	else if (shellpop == 0)
 	{
-
-		/* OPENSSL */
-		RAND_poll(); //  <-- Important
+		RAND_poll();
 
 		int                 bytes;
-//		char                userCMD[GENERIC_BUFFER_SIZE];
 		char				*userCMD = NULL;
 		std::string         serverResponse;
 		std::stringstream   serverResponseStream;
 		std::ifstream       execFile;
 
 		if (_cryptoWrapper->sendEncrypted(filedesc, CONFIRM_SHELL, strlen(CONFIRM_SHELL)) <= 0) {
-//		if (send(filedesc, CONFIRM_SHELL, strlen(CONFIRM_SHELL), 0) <= 0) {
 			exit(EXIT_FAILURE);
 		}
 		while (1)
@@ -218,14 +212,18 @@ pid_t    ConnectionManager::popShell(int filedesc) {
 			free(userCMD);
 			userCMD = joined;
 
+/* CD not working */
 			if (system(userCMD) != 0) {
 				_cryptoWrapper->sendEncrypted(filedesc, EXEC_ERROR_CMD, strlen(EXEC_ERROR_CMD));
+				free(userCMD);
 				continue ;
 			}
+			free(userCMD);
 
 			execFile.open(EXEC_FILE);
 			if (execFile.is_open() == false)
 			{
+				free(userCMD);
 				exit(EXIT_FAILURE);
 			}
 
