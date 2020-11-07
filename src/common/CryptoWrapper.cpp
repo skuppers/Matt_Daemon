@@ -27,56 +27,41 @@ int	CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 	unsigned char 	*encryptedMessage = NULL;
 	size_t			sentBytes;
 
+	/* Encrypt message with the cryptograph */
 	encryptedMessageLength = _cryptograph.AESEncrypt((const unsigned char*)buf, len + 1, &encryptedMessage);
 	if (encryptedMessageLength == -1) {
 		printf("Error encrypting message\n");
 		exit (-1);
 	}
 
-/*	printf("Encrypted message length: %d\n", encryptedMessageLength);
-	printf("\nCiphertext:");
-	for(int i = 0; i < encryptedMessageLength; i++) //variable len is length of ciphertext memorized after encryption.
-	{printf("%02X ",encryptedMessage[i]);}
-	printf("\n");
-*/
+	/* Send the encrypted message */
 	sentBytes = send(sockfd, encryptedMessage, encryptedMessageLength, 0);
 	if (sentBytes <= 0)
 		return -1;
 
 	free(encryptedMessage);
-//	printf("Sent bytes: %lu\n", sentBytes);
 
 	return encryptedMessageLength;
 }
 
-#include <unistd.h>
 int CryptoWrapper::recvEncrypted(int sockfd, char **decrypt_buffer, size_t len) {
 	int 			decryptedMessageLength;
 	char			encryptedMessageBuffer[len];
 	size_t			receivedBytes;
 
+	/* Receive the encrypted message */
 	bzero(encryptedMessageBuffer, len);
 	receivedBytes = recv(sockfd, encryptedMessageBuffer, len - 1, 0);
 	if (receivedBytes <= 0) 
 		return receivedBytes;
 
-/*	printf("Received %lu encrypted bytes\n", receivedBytes);
-	printf("\nCiphertext:");
-	for(int i = 0; i < receivedBytes; i++) //variable len is length of ciphertext memorized after encryption.
-	{printf("%02X ",encryptedMessageBuffer[i]);}
-	printf("\n");
-*/
-
+	/* Decrypt the message with the cryptograph */
 	decryptedMessageLength = _cryptograph.AESDecrypt((unsigned char*)encryptedMessageBuffer,
 														receivedBytes, (unsigned char **)decrypt_buffer);
 	if (decryptedMessageLength == -1) {
 		printf("Error decrypting message\n");
 		exit (-1);
 	}
-
-//	printf("Decrypted message length: %d\n", decryptedMessageLength);
-
-//	printf("Decrypted message: |%s|\n", (char*)*decrypt_buffer);
 
 	return decryptedMessageLength;
 }

@@ -24,25 +24,7 @@ Cryptograph::~Cryptograph(void)
 	return ;
 }
 
-EVP_CIPHER_CTX  *Cryptograph::getEncryptCTX(void) {
-	return _aesEncryptContext;
-}
-
-EVP_CIPHER_CTX  *Cryptograph::getDecryptCTX(void) {
-	return _aesDecryptContext;
-}
-
-unsigned char	*Cryptograph::getAesKey(void) {
-	return _aesKey;
-}
-unsigned char	*Cryptograph::getAesIv(void) {
-	return _aesIv;
-}
-
 int Cryptograph::deInit(void) {
-
-/*    EVP_CIPHER_CTX_free(_aesEncryptContext);
-	EVP_CIPHER_CTX_free(_aesDecryptContext); */
 
 	/* Removes all digests and ciphers */
 	EVP_cleanup();
@@ -52,9 +34,6 @@ int Cryptograph::deInit(void) {
 
 	/* Remove error strings */
 	ERR_free_strings();
-
- //   free(_aesKey);
- //   free(_aesIv);
 
 	return 0;
 }
@@ -207,6 +186,24 @@ int Cryptograph::AESDecrypt(unsigned char *encryptedMessage, size_t encryptedMes
 
 	return ((int)decryptedMessageLength); // Total decrypted data length (data + padding)
 }
+
+
+EVP_CIPHER_CTX  *Cryptograph::getEncryptCTX(void) {
+	return _aesEncryptContext;
+}
+
+EVP_CIPHER_CTX  *Cryptograph::getDecryptCTX(void) {
+	return _aesDecryptContext;
+}
+
+unsigned char	*Cryptograph::getAesKey(void) {
+	return _aesKey;
+}
+unsigned char	*Cryptograph::getAesIv(void) {
+	return _aesIv;
+}
+
+
 
 Cryptograph &Cryptograph::operator=(const Cryptograph & rhs)
 {

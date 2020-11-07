@@ -35,7 +35,7 @@ int		main(void)
     policymgr.checkUID();
     policymgr.lock();
 
-    Tintin_reporter logger(DFLT_LOGFILE);		// Make logfile append mode
+    Tintin_reporter logger(DFLT_LOGFILE);		// Make logfile append mode + rotation & archiving
 	g_reporter = &logger;
 
     g_signalTerminate = false;
