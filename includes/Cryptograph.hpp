@@ -49,10 +49,11 @@ class Cryptograph
 		/* AES */
 		int AESEncrypt(const unsigned char *message, size_t messageLength, unsigned char **encryptedMessage);
     	int AESDecrypt(unsigned char *encryptedMessage, size_t encryptedMessageLength, unsigned char **decryptedMessage);
-/*		int getAesKey(unsigned char **aesKey);
-    	int setAesKey(unsigned char *aesKey, size_t aesKeyLen);
-    	int getAesIv(unsigned char **aesIv);
-    	int setAesIv(unsigned char *aesIv, size_t aesIvLen);*/
+
+		EVP_CIPHER_CTX	*getEncryptCTX(void);
+		EVP_CIPHER_CTX	*getDecryptCTX(void);
+		unsigned char	*getAesKey(void);
+    	unsigned char	*getAesIv(void);
 
 
 

@@ -14,6 +14,11 @@ CryptoWrapper::CryptoWrapper(Cryptograph &cg) : _cryptograph(cg)
 
 CryptoWrapper::~CryptoWrapper(void)
 {
+	EVP_CIPHER_CTX_free(_cryptograph.getEncryptCTX());
+    EVP_CIPHER_CTX_free(_cryptograph.getDecryptCTX());
+
+    free(_cryptograph.getAesKey());
+    free(_cryptograph.getAesIv());
 	return ;
 }
 
@@ -35,11 +40,10 @@ int	CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 	printf("\n");
 */
 	sentBytes = send(sockfd, encryptedMessage, encryptedMessageLength, 0);
-	if (sentBytes <= 0) {
-		printf("Error sending data.");
-		exit(-1);
-	}
+	if (sentBytes <= 0)
+		return -1;
 
+	free(encryptedMessage);
 //	printf("Sent bytes: %lu\n", sentBytes);
 
 	return encryptedMessageLength;
@@ -53,10 +57,8 @@ int CryptoWrapper::recvEncrypted(int sockfd, char **decrypt_buffer, size_t len) 
 
 	bzero(encryptedMessageBuffer, len);
 	receivedBytes = recv(sockfd, encryptedMessageBuffer, len - 1, 0);
-	if (receivedBytes <= 0) {
-		printf("Error receiving data.\n");
-		exit(-1);
-	}
+	if (receivedBytes <= 0) 
+		return receivedBytes;
 
 /*	printf("Received %lu encrypted bytes\n", receivedBytes);
 	printf("\nCiphertext:");

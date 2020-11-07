@@ -45,14 +45,17 @@ bool    Ben_Afk::connectToDaemon(void) {
 
 	if (strncmp(buff, RST_CMD, strlen(RST_CMD)) == 0) {
 		std::cerr << "Error connecting to " << _destIP << ":" << _destPort << " : no slot avaible." << std::endl;
+		free(buff);
 		return false;
 		
 	} else if (strncmp(buff, SYNACK_CMD, strlen(SYNACK_CMD)) == 0) {
 		std::cout << "Connected to " << _destIP << ":" << _destPort << std::endl;
+		free(buff);
 		return true;
 	}
-	
+
 	std::cerr << "Fatal connection error.\n" << std::endl;
+	free(buff);
 	return false;
 }
 
@@ -70,7 +73,8 @@ std::string *Ben_Afk::readInput(void) {
 
 int        Ben_Afk::communicate(std::string *input) {
 
-	if (send(_socket, input->c_str(), strlen(input->c_str()), 0) < 0) {
+	if (_cryptoWrapper->sendEncrypted(_socket, input->c_str(), strlen(input->c_str())) < 0) {
+	//if (send(_socket, input->c_str(), strlen(input->c_str()), 0) < 0) {
 		std::cerr << "Error sending data!. Quitting." << std::endl;
 		delete input;
 		return false ;
@@ -82,14 +86,14 @@ int        Ben_Afk::communicate(std::string *input) {
 		delete input;
 		return false;
 	}
-	else if (input->compare(SHELL_CMD) == 0)
+	else if (input->compare(SHELL_CMD) == 0) //TODO
 	{
 		int         bytes;
 		std::string shellCMD;
-		char        serverResponse[GENERIC_BUFFER_SIZE];
-		
-		bzero(serverResponse, GENERIC_BUFFER_SIZE);
-		if ((bytes = recv(_socket, serverResponse, GENERIC_BUFFER_SIZE - 1, 0)) <= 0)
+//		char        serverResponse[GENERIC_BUFFER_SIZE];
+		char		*serverResponse = NULL;		
+//		bzero(serverResponse, GENERIC_BUFFER_SIZE);
+		if ((bytes = _cryptoWrapper->recvEncrypted(_socket, &serverResponse, GENERIC_BUFFER_SIZE)) <= 0)
 		{
 			std::cerr << "Error spawning shell. Quitting." << std::endl;
 			delete input;
@@ -105,16 +109,16 @@ int        Ben_Afk::communicate(std::string *input) {
 			std::getline(std::cin, shellCMD);
 			if (!std::cin) {
 				std::cout << std::endl << "Exiting." << std::endl;
-				send(_socket, DISCONNECT_CMD, strlen(DISCONNECT_CMD), 0);
+				_cryptoWrapper->sendEncrypted(_socket, DISCONNECT_CMD, strlen(DISCONNECT_CMD));
 				return false;
 			}
 			if (shellCMD.length() == 0)
 				continue ;
-			if (send(_socket, shellCMD.c_str(), strlen(shellCMD.c_str()), 0) <= 0) {
+			if (_cryptoWrapper->sendEncrypted(_socket, shellCMD.c_str(), strlen(shellCMD.c_str())) <= 0) {
 				std::cerr << "Error sending command. Quitting shell." << std::endl;
 				return false ;
 			}
-			if ((bytes = recv(_socket, serverResponse, 4096, 0)) <= 0) {
+			if ((bytes = _cryptoWrapper->recvEncrypted(_socket, &serverResponse, GENERIC_BUFFER_SIZE)) <= 0) {
 				std::cerr << "Error receiving shell response. Quitting shell." << std::endl;
 				return false ;
 			}
@@ -128,6 +132,7 @@ int        Ben_Afk::communicate(std::string *input) {
 			fputs(serverResponse, stdout);
 		}
 	}
+	
 	delete input;
 	return true;
 }

