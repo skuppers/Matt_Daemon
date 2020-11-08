@@ -54,11 +54,40 @@ int	Cryptograph::initRSA(void) {
 	_localKeypair = NULL;
 	_remotePublicKey = NULL;
 
+	_rsaEncryptContext = EVP_CIPHER_CTX_new();
+  	_rsaDecryptContext = EVP_CIPHER_CTX_new(); // Check for alloc fails
+
+	generateRsaKeypair(&_localKeypair);
+
+	std::cout << "Private Key file:" << std::endl;
+	PEM_write_PrivateKey(stdout, _localKeypair, NULL, NULL, 0, 0, NULL);
+
+	std::cout << "Public Key file:" << std::endl;
+	PEM_write_PUBKEY(stdout, _localKeypair);
+
+	exit(0);
 
 	return 0;
 }
 
 int Cryptograph::generateRsaKeypair(EVP_PKEY **keypair) {
+
+	EVP_PKEY_CTX *context = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
+
+	if(EVP_PKEY_keygen_init(context) <= 0) {
+    	return -1;
+	}
+
+	if(EVP_PKEY_CTX_set_rsa_keygen_bits(context, RSA_KEYLEN) <= 0) {
+    	return -1;
+  	}
+
+	if(EVP_PKEY_keygen(context, keypair) <= 0) {
+    	return -1;
+  	}
+
+	EVP_PKEY_CTX_free(context);
+
 	return 0;
 }
 
@@ -78,17 +107,46 @@ int Cryptograph::setRemotePublicKey() {
 	return 0;
 }
 
-int Cryptograph::getLocalPrivateKey() {
-	return 0;
+
+int Cryptograph::getLocalPrivateKey(unsigned char **privateKey) {
+
+	BIO *bio = BIO_new(BIO_s_mem());
+
+  	PEM_write_bio_PrivateKey(bio, _localKeypair, NULL, NULL, 0, 0, NULL);
+
+  	return bioToString(bio, privateKey);
 }
 
-int Cryptograph::getLocalPublicKey() {
-	return 0;
+int Cryptograph::getLocalPublicKey(unsigned char **publicKey) {
+
+	BIO *bio = BIO_new(BIO_s_mem());
+
+	PEM_write_bio_PUBKEY(bio, _localKeypair);
+
+  	return bioToString(bio, publicKey);
 }
 
-#endif
 
-#ifdef USE_AES
+int Cryptograph::bioToString(BIO *bio, unsigned char **string) {
+
+	size_t bioLength = BIO_pending(bio);
+
+	*string = (unsigned char*)malloc(bioLength + 1);
+
+	if(string == NULL)
+    	return -1;
+	
+	BIO_read(bio, *string, bioLength);
+
+  	(*string)[bioLength] = '\0';
+
+  	BIO_free_all(bio);
+
+  	return (int)bioLength;
+}
+
+#else
+
 int Cryptograph::initAES(void) {
 	/* Create encryption and decryption contexts */
 	_aesEncryptContext = EVP_CIPHER_CTX_new();

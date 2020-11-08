@@ -27,6 +27,7 @@ class Cryptograph
 
 		int 	initRSA();
 		int 	generateRsaKeypair(EVP_PKEY **keypair);
+		int		bioToString(BIO *bio, unsigned char **string);
 
 #else
 		/* AES */
@@ -63,8 +64,8 @@ class Cryptograph
 		int		getRemotePublicKey();
 		int		setRemotePublicKey();
 
-		int		getLocalPrivateKey();
-		int		getLocalPublicKey();
+		int		getLocalPrivateKey(unsigned char **privateKey);
+		int		getLocalPublicKey(unsigned char **publickey);
 
 		//writekeytofile ?
 

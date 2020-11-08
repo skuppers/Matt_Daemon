@@ -48,7 +48,7 @@ endif
 
 #--------------------------------- AES / RSA ----------------------------------#
 
-ifeq ($(rsa),yes)
+ifeq ($(use),rsa)
 	CFLAGS += "-DUSE_RSA"
 else
 	CFLAGS += "-DUSE_AES"

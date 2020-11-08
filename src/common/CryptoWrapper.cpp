@@ -12,19 +12,26 @@ CryptoWrapper::CryptoWrapper(Cryptograph &cg) : _cryptograph(cg)
 
 CryptoWrapper::~CryptoWrapper(void)
 {
+#ifdef USE_RSA
+
+#else
 	EVP_CIPHER_CTX_free(_cryptograph.getAesEncryptCTX());
     EVP_CIPHER_CTX_free(_cryptograph.getAesDecryptCTX());
 
     free(_cryptograph.getAesKey());
     free(_cryptograph.getAesIv());
+#endif
 	return ;
 }
 
 int	CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
-	int 			encryptedMessageLength;
+	int 			encryptedMessageLength = 0;
 	unsigned char 	*encryptedMessage = NULL;
 	size_t			sentBytes;
 
+#ifdef USE_RSA
+
+#else
 	/* Encrypt message with the cryptograph */
 	encryptedMessageLength = _cryptograph.AESEncrypt((const unsigned char*)buf, len + 1, &encryptedMessage);
 	if (encryptedMessageLength == -1) {
@@ -38,15 +45,18 @@ int	CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 		return -1;
 
 	free(encryptedMessage);
-
+#endif
 	return encryptedMessageLength;
 }
 
 int CryptoWrapper::recvEncrypted(int sockfd, char **decrypt_buffer) {
-	int 			decryptedMessageLength;
+	int 			decryptedMessageLength = 0;
 	char			encryptedMessageBuffer[GENERIC_BUFFER_SIZE]; // allocate those
 	size_t			receivedBytes;
 
+#ifdef USE_RSA
+
+#else
 	/* Receive the encrypted message */
 	bzero(encryptedMessageBuffer, GENERIC_BUFFER_SIZE);
 	receivedBytes = recv(sockfd, encryptedMessageBuffer, GENERIC_BUFFER_SIZE - 1, 0);
@@ -60,7 +70,7 @@ int CryptoWrapper::recvEncrypted(int sockfd, char **decrypt_buffer) {
 		printf("Error decrypting message\n");
 		exit (-1);
 	}
-
+#endif
 	return decryptedMessageLength;
 }
 
