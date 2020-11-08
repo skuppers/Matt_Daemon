@@ -67,12 +67,15 @@ class Cryptograph
 		int				getLocalPublicKey(unsigned char **publickey);
 
 		EVP_PKEY		*getLocalKeypairEVP(void);
-		
+
 		EVP_PKEY		*getRemotePublicEVP(void);
 		void			setRemotePublicKeyEVP(EVP_PKEY *remoteEVP_PKEY);
 
 		EVP_CIPHER_CTX	*getRsaEncryptCTX(void);
 		EVP_CIPHER_CTX	*getRsaDecryptCTX(void);
+
+		EVP_PKEY		*readx509Certificate(const char *certfile);
+		EVP_PKEY		*ReadPrivateKey(const char *keyfile);
 
 		//writekeytofile ?
 

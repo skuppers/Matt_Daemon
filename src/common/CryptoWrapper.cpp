@@ -26,15 +26,15 @@ CryptoWrapper::~CryptoWrapper(void)
   	EVP_CIPHER_CTX_free(_cryptograph.getRsaDecryptCTX());
 #else
 	EVP_CIPHER_CTX_free(_cryptograph.getAesEncryptCTX());
-    EVP_CIPHER_CTX_free(_cryptograph.getAesDecryptCTX());
+	EVP_CIPHER_CTX_free(_cryptograph.getAesDecryptCTX());
 
-    free(_cryptograph.getAesKey());
-    free(_cryptograph.getAesIv());
+	free(_cryptograph.getAesKey());
+	free(_cryptograph.getAesIv());
 #endif
 	return ;
 }
-
-char		*CryptoWrapper::readPEMFile(FILE *pemFile) {
+/*
+char	*CryptoWrapper::readPEMFile(FILE *pemFile) {
 	long	fsize = 0;
 	char	*pemBuffer = NULL;
 
@@ -50,7 +50,7 @@ char		*CryptoWrapper::readPEMFile(FILE *pemFile) {
 	return pemBuffer;
 }
 
-int	CryptoWrapper::sendLocalPublicKey(int sockfd) {
+int		CryptoWrapper::sendLocalPublicKey(int sockfd) {
 
 	size_t 	sentBytes;
 	FILE 	*fileptr = NULL;
@@ -60,10 +60,10 @@ int	CryptoWrapper::sendLocalPublicKey(int sockfd) {
 	std::string pemFile  = PUBKEY_FILE_PATH + progName + "_local.public.pem";
 
 	if ((fileptr = fopen(pemFile.c_str(), "w+")) == NULL)
-    {
-        printf("Unable to create file: %s\n", strerror(errno));
-        exit(EXIT_FAILURE);
-    }
+	{
+		printf("Unable to create file: %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
 
 	if (PEM_write_PUBKEY(fileptr, _cryptograph.getLocalKeypairEVP()) == 0) {
 		printf("Failed to write pemfile: %s\n", strerror(errno));
@@ -83,7 +83,7 @@ int	CryptoWrapper::sendLocalPublicKey(int sockfd) {
 	return 0;
 }
 
-int CryptoWrapper::receiveRemotePublicKey(int sockfd) {
+int 	CryptoWrapper::receiveRemotePublicKey(int sockfd) {
 
 	size_t		receivedBytes;
 	FILE 		*fileptr = NULL;
@@ -100,9 +100,9 @@ int CryptoWrapper::receiveRemotePublicKey(int sockfd) {
 	std::string pemFile  = PUBKEY_FILE_PATH + progName + "_remote.public.pem";
 
 	if ((fileptr = fopen(pemFile.c_str(), "w+")) == NULL) {
-        printf("Unable to create file.\n");
-        exit(EXIT_FAILURE);
-    }
+		printf("Unable to create file.\n");
+		exit(EXIT_FAILURE);
+	}
 
 	if (fputs(pemBuffer, fileptr) <= 0) {
 		printf("Unable to write pemBuffer to file: %s\n", strerror(errno));
@@ -124,13 +124,28 @@ int CryptoWrapper::receiveRemotePublicKey(int sockfd) {
 
 	return (0);
 }
-
-int	CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
-	int 			encryptedMessageLength = 0;
+*/
+int		CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
+	int 			encryptedMessageLength;
 	unsigned char 	*encryptedMessage = NULL;
 	size_t			sentBytes;
 
 #ifdef USE_RSA
+
+	unsigned char 	*sessionKey;
+	unsigned char 	*iv;
+	size_t 			sessionKeyLength;
+	size_t 			ivLength;
+	
+	encryptedMessageLength = _cryptograph.RSAEncrypt((const unsigned char*)buf, len + 1,
+   		&encryptedMessage, &sessionKey, &sessionKeyLength,
+		&iv, &ivLength);
+	if (encryptedMessageLength == -1) {
+		printf("Error encrypting message\n");
+		exit (-1);
+	}
+
+	/* Send over the sessionkey first */
 
 #else
 	/* Encrypt message with the cryptograph */
@@ -150,7 +165,7 @@ int	CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 	return encryptedMessageLength;
 }
 
-int CryptoWrapper::recvEncrypted(int sockfd, char **decrypt_buffer) {
+int 	CryptoWrapper::recvEncrypted(int sockfd, char **decrypt_buffer) {
 	int 			decryptedMessageLength = 0;
 	char			encryptedMessageBuffer[GENERIC_BUFFER_SIZE]; // allocate those
 	size_t			receivedBytes;
@@ -178,14 +193,14 @@ int CryptoWrapper::recvEncrypted(int sockfd, char **decrypt_buffer) {
 
 CryptoWrapper &CryptoWrapper::operator=(const CryptoWrapper & rhs)
 {
-    if (this != &rhs)
-        *this = rhs;
-    return *this;
+	if (this != &rhs)
+		*this = rhs;
+	return *this;
 }
 
 std::ostream &operator<<(std::ostream &out, CryptoWrapper const & pm)
 {
-    (void)pm;
-    out << "CryptoWrapper" << std::endl;
-    return out;
+	(void)pm;
+	out << "CryptoWrapper" << std::endl;
+	return out;
 }
