@@ -237,8 +237,12 @@ int Cryptograph::getLocalPublicKey(unsigned char **publicKey) {
 }
 
 
-EVP_PKEY *Cryptograph::getLocalPublicKeyEVP(void) {
+EVP_PKEY *Cryptograph::getLocalKeypairEVP(void) {
 	return _localKeypair;
+}
+
+EVP_PKEY *Cryptograph::getRemotePublicEVP(void) {
+	return _remotePublicKey;
 }
 
 void	Cryptograph::setRemotePublicKeyEVP(EVP_PKEY *remoteEVP_PKEY) {
@@ -263,12 +267,12 @@ int Cryptograph::bioToString(BIO *bio, unsigned char **string) {
   	return (int)bioLength;
 }
 
-/* TODO */
-EVP_CIPHER_CTX	*getRsaEncryptCTX(void) {
-	return nullptr;
+EVP_CIPHER_CTX	*Cryptograph::getRsaEncryptCTX(void) {
+	return _rsaEncryptContext;
 }
-EVP_CIPHER_CTX	*getRsaDecryptCTX(void) {
-	return nullptr;
+
+EVP_CIPHER_CTX	*Cryptograph::getRsaDecryptCTX(void) {
+	return _rsaDecryptContext;
 }
 
 //#else
@@ -343,20 +347,20 @@ int Cryptograph::AESEncrypt(const unsigned char *message, size_t messageLength, 
 	/* Allocate memory for the encrypted message */
 	*encryptedMessage = (unsigned char*)malloc(messageLength + AES_BLOCK_SIZE);
 	if(encryptedMessage == NULL) {
-		printf("Error allocating memory for encrypted message\n");
+		std::cerr << "Error allocating memory for encrypted message" << std::endl;
 		return -1;
 	}
 
 	/* Put all together for encryption */
 	if(!EVP_EncryptInit_ex(_aesEncryptContext, EVP_aes_256_cbc(), NULL, _aesKey, _aesIv)) {
-		printf("Error in EVP_EncryptInit_ex\n");
+		std::cerr << "Error in EVP_EncryptInit_ex" << std::endl;
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}
 
 	/* Actual encryption process */
 	if(!EVP_EncryptUpdate(_aesEncryptContext, *encryptedMessage, (int*)&blockLength, (unsigned char*)message, messageLength)) {
-		printf("Error in EVP_EncryptUpdate\n");
+		std::cerr << "Error in EVP_EncryptUpdate" << std::endl;
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}
@@ -364,7 +368,7 @@ int Cryptograph::AESEncrypt(const unsigned char *message, size_t messageLength, 
 
 	/* Encrypt the padded data if they is any */
 	if(!EVP_EncryptFinal_ex(_aesEncryptContext, *encryptedMessage + encryptedMessageLength, (int*)&blockLength)) {
-		printf("Error in EVP_EncryptFinal_ex\n");
+		std::cerr << "Error in EVP_EncryptFinal_ex" << std::endl;
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}
@@ -379,20 +383,20 @@ int Cryptograph::AESDecrypt(unsigned char *encryptedMessage, size_t encryptedMes
 	/* Allocate memory for the decrypted message */
 	*decryptedMessage = (unsigned char*)malloc(encryptedMessageLength);
 	if(*decryptedMessage == NULL) {
-		printf("Error allocating memory for decrypted message\n");
+		std::cerr << "Error allocating memory for decrypted message" << std::endl;
 		return -1;
 	}
 
 	/* Define decryption parameters */
 	if(!EVP_DecryptInit_ex(_aesDecryptContext, EVP_aes_256_cbc(), NULL, _aesKey, _aesIv)) {
-		printf("Error in EVP_DecryptInit_ex\n");
+		std::cerr << "Error in EVP_DecryptInit_ex" << std::endl;
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}
 
 	/* Actual decryption process */
 	if(!EVP_DecryptUpdate(_aesDecryptContext, (unsigned char*)*decryptedMessage, (int*)&blockLength, encryptedMessage, (int)encryptedMessageLength)) {
-		printf("Error in EVP_DecryptUpdate\n");
+		std::cerr << "Error in EVP_DecryptUpdate" << std::endl;
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}
@@ -400,7 +404,7 @@ int Cryptograph::AESDecrypt(unsigned char *encryptedMessage, size_t encryptedMes
 
 	/* Decrypt the padded data if they is any */
 	if(!EVP_DecryptFinal_ex(_aesDecryptContext, (unsigned char*)*decryptedMessage + decryptedMessageLength, (int*)&blockLength)) {
-		printf("Error in EVP_DecryptFinal_ex\n");
+		std::cerr << "Error in EVP_DecryptFinal_ex" << std::endl;
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}

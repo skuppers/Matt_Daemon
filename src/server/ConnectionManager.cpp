@@ -109,7 +109,8 @@ int     ConnectionManager::acceptNewClients(void) {
 	}
 	else
 	{
-
+		/* RSA public key exchange process	*/
+		/*									*/
 #ifdef USE_RSA
 
 		if (_cryptoWrapper->receiveRemotePublicKey(newfd) != 0

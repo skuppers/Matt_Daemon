@@ -15,13 +15,15 @@ CryptoWrapper::CryptoWrapper(Cryptograph &cg) : _cryptograph(cg)
 
 CryptoWrapper::~CryptoWrapper(void)
 {
+	
 #ifdef USE_RSA
-	//EVP_PKEY_free(_cryptograph.getRemotePublicKey());
+	EVP_PKEY_free(_cryptograph.getLocalKeypairEVP());
+	EVP_PKEY_free(_cryptograph.getRemotePublicEVP());
 
 	// Local key pair?
 
-//  	EVP_CIPHER_CTX_free(_cryptograph.getRsaEncryptCTX());
-//  	EVP_CIPHER_CTX_free(_cryptograph.getRsaDecryptCTX());
+  	EVP_CIPHER_CTX_free(_cryptograph.getRsaEncryptCTX());
+  	EVP_CIPHER_CTX_free(_cryptograph.getRsaDecryptCTX());
 #else
 	EVP_CIPHER_CTX_free(_cryptograph.getAesEncryptCTX());
     EVP_CIPHER_CTX_free(_cryptograph.getAesDecryptCTX());
@@ -63,7 +65,7 @@ int	CryptoWrapper::sendLocalPublicKey(int sockfd) {
         exit(EXIT_FAILURE);
     }
 
-	if (PEM_write_PUBKEY(fileptr, _cryptograph.getLocalPublicKeyEVP()) == 0) {
+	if (PEM_write_PUBKEY(fileptr, _cryptograph.getLocalKeypairEVP()) == 0) {
 		printf("Failed to write pemfile: %s\n", strerror(errno));
 	}
 
@@ -122,7 +124,6 @@ int CryptoWrapper::receiveRemotePublicKey(int sockfd) {
 
 	return (0);
 }
-
 
 int	CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 	int 			encryptedMessageLength = 0;

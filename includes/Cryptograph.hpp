@@ -66,7 +66,9 @@ class Cryptograph
 		int				getLocalPrivateKey(unsigned char **privateKey);
 		int				getLocalPublicKey(unsigned char **publickey);
 
-		EVP_PKEY		*getLocalPublicKeyEVP(void);
+		EVP_PKEY		*getLocalKeypairEVP(void);
+		
+		EVP_PKEY		*getRemotePublicEVP(void);
 		void			setRemotePublicKeyEVP(EVP_PKEY *remoteEVP_PKEY);
 
 		EVP_CIPHER_CTX	*getRsaEncryptCTX(void);
