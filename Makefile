@@ -12,9 +12,7 @@ CFLAGS += -D _GNU_SOURCE
 LIBCRYPTO += -lcrypto
 
 # Compiler Debug Flags
-ifeq ($(d), 0)
-	CFLAGS += -g3
-else ifeq ($(d), 1)
+ifeq ($(d), 1)
 	CFLAGS += -g3
 	CFLAGS += -fsanitize=address,undefined
 else ifeq ($(d), 2)

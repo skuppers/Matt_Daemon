@@ -16,7 +16,7 @@
 class Cryptograph
 {
 	private:
-#ifdef USE_RSA
+//#ifdef USE_RSA
 
 		/* RSA */
 		EVP_PKEY 		*_localKeypair;
@@ -29,7 +29,7 @@ class Cryptograph
 		int 	generateRsaKeypair(EVP_PKEY **keypair);
 		int		bioToString(BIO *bio, unsigned char **string);
 
-#else
+//#else
 		/* AES */
 		EVP_CIPHER_CTX 	*_aesEncryptContext;
 		EVP_CIPHER_CTX 	*_aesDecryptContext;
@@ -43,7 +43,7 @@ class Cryptograph
 		int 	initAES(void);
     	int 	generateAesKey(unsigned char **aesKey, unsigned char **aesIv);
 
-#endif //USE_RSA
+//#endif //USE_RSA
 
 		/* General */
 		int init(void);
@@ -54,12 +54,14 @@ class Cryptograph
 		~Cryptograph(void);
 		Cryptograph &operator=(Cryptograph const &rhs);
 
-#ifdef USE_RSA
+//#ifdef USE_RSA
 
 		/* RSA */
 
-		int 	RSAEncrypt();
-		int		RSADecrypt();
+		int 	RSAEncrypt(const unsigned char *message, size_t messageLength, unsigned char **encryptedMessage,
+							unsigned char **encryptedKey, size_t *encryptedKeyLength, unsigned char **iv, size_t *ivLength);
+		int		RSADecrypt(unsigned char *encryptedMessage, size_t encryptedMessageLength, unsigned char **decryptedMessage,
+							unsigned char *encryptedKey, size_t encryptedKeyLength, unsigned char *iv, size_t ivLength);
 
 		int		getRemotePublicKey();
 		int		setRemotePublicKey();
@@ -67,9 +69,12 @@ class Cryptograph
 		int		getLocalPrivateKey(unsigned char **privateKey);
 		int		getLocalPublicKey(unsigned char **publickey);
 
+		EVP_CIPHER_CTX	*getRsaEncryptCTX(void);
+		EVP_CIPHER_CTX	*getRsaDecryptCTX(void);
+
 		//writekeytofile ?
 
-#else
+//#else
 		/* AES */
 		int AESEncrypt(const unsigned char *message, size_t messageLength, unsigned char **encryptedMessage);
     	int AESDecrypt(unsigned char *encryptedMessage, size_t encryptedMessageLength, unsigned char **decryptedMessage);
@@ -79,7 +84,7 @@ class Cryptograph
 		unsigned char	*getAesKey(void);
     	unsigned char	*getAesIv(void);
 
-#endif //USE_RSA
+//#endif //USE_RSA
 		
 
 		

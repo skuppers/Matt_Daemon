@@ -49,7 +49,7 @@ int Cryptograph::init(void) {
 	return 0;
 }
 
-#ifdef USE_RSA
+//#ifdef USE_RSA
 int	Cryptograph::initRSA(void) {
 	_localKeypair = NULL;
 	_remotePublicKey = NULL;
@@ -58,12 +58,58 @@ int	Cryptograph::initRSA(void) {
   	_rsaDecryptContext = EVP_CIPHER_CTX_new(); // Check for alloc fails
 
 	generateRsaKeypair(&_localKeypair);
+	_remotePublicKey = _localKeypair;
 
+/*
 	std::cout << "Private Key file:" << std::endl;
 	PEM_write_PrivateKey(stdout, _localKeypair, NULL, NULL, 0, 0, NULL);
 
 	std::cout << "Public Key file:" << std::endl;
 	PEM_write_PUBKEY(stdout, _localKeypair);
+
+	std::cout << "\n\n\n\n";
+
+	std::string message = "A message to RSA encrypt";
+
+  // Encrypt the message with RSA
+  // +1 on the string length argument because we want to encrypt the NUL terminator too
+  unsigned char *encryptedMessage = NULL;
+
+  	unsigned char *sessionKey;
+	size_t sessionKeyLength;
+
+  unsigned char *iv;
+  size_t ivLength;
+
+
+	int encryptedMessageLength = RSAEncrypt((const unsigned char*)message.c_str(), message.size()+1,
+    &encryptedMessage, &sessionKey, &sessionKeyLength, &iv, &ivLength);
+
+  if(encryptedMessageLength == -1) {
+    fprintf(stderr, "Encryption failed\n");
+    exit (-1);
+  }
+
+  // Print the encrypted message as a base64 string
+//  char* b64Message = base64Encode(encryptedMessage, encryptedMessageLength);
+//  printf("Encrypted message: %s\n", b64Message);
+
+  // Decrypt the message
+  char *decryptedMessage = NULL;
+
+  int decryptedMessageLength = RSADecrypt(encryptedMessage, (size_t)encryptedMessageLength,
+    (unsigned char**)&decryptedMessage, sessionKey, sessionKeyLength, iv, ivLength);
+
+  if(decryptedMessageLength == -1) {
+    fprintf(stderr, "Decryption failed\n");
+    exit (-1);
+  }
+
+  printf("Decrypted message: %s\n", decryptedMessage);
+
+*/
+
+
 
 	exit(0);
 
@@ -91,12 +137,86 @@ int Cryptograph::generateRsaKeypair(EVP_PKEY **keypair) {
 	return 0;
 }
 
-int Cryptograph::RSAEncrypt() {
-	return 0;
+int Cryptograph::RSAEncrypt(const unsigned char *message, size_t messageLength,
+	unsigned char **encryptedMessage,
+	unsigned char **sessionKey, size_t *sessionKeyLength, // Sessionkey!
+	unsigned char **iv, size_t *ivLength) {
+
+
+	size_t encryptedMessageLength = 0;
+  	size_t blockLength = 0;
+
+
+	*sessionKey = (unsigned char*)malloc(EVP_PKEY_size(_remotePublicKey));
+  	*iv = (unsigned char*)malloc(EVP_MAX_IV_LENGTH);
+  	*ivLength = EVP_MAX_IV_LENGTH;
+
+	if(*sessionKey == NULL || *iv == NULL) {
+    	return -1;
+  	}
+
+	*encryptedMessage = (unsigned char*)malloc(messageLength + EVP_MAX_IV_LENGTH);
+  	if(encryptedMessage == NULL) {
+    	return -1;
+  	}
+
+	/* Encryption and decryption with asymmetric keys is computationally expensive. */
+	/* Typically then messages are not encrypted directly with such keys but are    */
+	/* instead encrypted using a symmetric "session" key. This key is itself then 	*/
+	/* encrypted using the public key.												*/
+	/* In OpenSSL this combination is referred to as an envelope.					*/
+  	if(!EVP_SealInit(_rsaEncryptContext, EVP_aes_256_cbc(),
+	  				sessionKey, (int*)sessionKeyLength, *iv, &_remotePublicKey, 1)) {
+    	return -1;
+  	}
+
+  	if(!EVP_SealUpdate(_rsaEncryptContext, *encryptedMessage + encryptedMessageLength,
+	  					(int*)&blockLength, (const unsigned char*)message, (int)messageLength)) {
+    	return -1;
+  	}
+  	encryptedMessageLength += blockLength;
+
+  	if(!EVP_SealFinal(_rsaEncryptContext, *encryptedMessage + encryptedMessageLength, (int*)&blockLength)) {
+    	return -1;
+  	}
+  	encryptedMessageLength += blockLength;
+
+  	return (int)encryptedMessageLength;
 }
 
-int Cryptograph::RSADecrypt() {
-	return 0;
+int Cryptograph::RSADecrypt(unsigned char *encryptedMessage, size_t encryptedMessageLength,
+	unsigned char **decryptedMessage,
+	unsigned char *sessionKey, size_t sessionKeyLength, // Sessionkey
+	unsigned char *iv, size_t ivLength) {
+
+	size_t decryptedMessageLength = 0;
+  	size_t blockLength = 0;
+
+  	*decryptedMessage = (unsigned char*)malloc(encryptedMessageLength + ivLength);
+  	if(*decryptedMessage == NULL) {
+    	return -1;
+  	}
+
+/* */
+	EVP_PKEY *key = _remotePublicKey; // TMP
+/* */
+
+  	if(!EVP_OpenInit(_rsaDecryptContext, EVP_aes_256_cbc(), sessionKey, sessionKeyLength, iv, key)) {
+    	return -1;
+  	}
+
+  	if(!EVP_OpenUpdate(_rsaDecryptContext, (unsigned char*)*decryptedMessage + decryptedMessageLength,
+	  					(int*)&blockLength, encryptedMessage, (int)encryptedMessageLength)) {
+    	return -1;
+  	}
+  	decryptedMessageLength += blockLength;
+
+  	if(!EVP_OpenFinal(_rsaDecryptContext, (unsigned char*)*decryptedMessage + decryptedMessageLength, (int*)&blockLength)) {
+    	return -1;
+  	}
+  	decryptedMessageLength += blockLength;
+
+  	return (int)decryptedMessageLength;
 }
 
 int Cryptograph::getRemotePublicKey() {
@@ -145,7 +265,14 @@ int Cryptograph::bioToString(BIO *bio, unsigned char **string) {
   	return (int)bioLength;
 }
 
-#else
+EVP_CIPHER_CTX	*getRsaEncryptCTX(void) {
+	return nullptr;
+}
+EVP_CIPHER_CTX	*getRsaDecryptCTX(void) {
+	return nullptr;
+}
+
+//#else
 
 int Cryptograph::initAES(void) {
 	/* Create encryption and decryption contexts */
@@ -298,7 +425,8 @@ unsigned char	*Cryptograph::getAesKey(void) {
 unsigned char	*Cryptograph::getAesIv(void) {
 	return _aesIv;
 }
-#endif
+
+//#endif
 
 
 Cryptograph &Cryptograph::operator=(const Cryptograph & rhs)

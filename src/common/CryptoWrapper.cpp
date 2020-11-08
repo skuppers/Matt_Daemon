@@ -13,7 +13,12 @@ CryptoWrapper::CryptoWrapper(Cryptograph &cg) : _cryptograph(cg)
 CryptoWrapper::~CryptoWrapper(void)
 {
 #ifdef USE_RSA
+	//EVP_PKEY_free(_cryptograph.getRemotePublicKey());
 
+	// Local key pair?
+
+//  	EVP_CIPHER_CTX_free(_cryptograph.getRsaEncryptCTX());
+//  	EVP_CIPHER_CTX_free(_cryptograph.getRsaDecryptCTX());
 #else
 	EVP_CIPHER_CTX_free(_cryptograph.getAesEncryptCTX());
     EVP_CIPHER_CTX_free(_cryptograph.getAesDecryptCTX());
