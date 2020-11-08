@@ -3,26 +3,23 @@
 Cryptograph::Cryptograph(void)
 {
 	init();
+#ifdef  USE_RSA
+	std::cout << "Using RSA" << std::endl;
+	initRSA();
+#else
+	std::cout << "Using AES" << std::endl;
 	initAES();
-	return ;
-}
-
-Cryptograph::Cryptograph(bool rsa) : _useRSA(rsa)
-{
-	init();
-	if (_useRSA)
-		;//initRSA();
-	else
-		initAES();
+#endif  //USE_RSA
+	
 	return ;
 }
 
 Cryptograph::~Cryptograph(void)
 {
 	//deInit();
-
 	return ;
 }
+
 
 int Cryptograph::deInit(void) {
 
@@ -52,6 +49,46 @@ int Cryptograph::init(void) {
 	return 0;
 }
 
+#ifdef USE_RSA
+int	Cryptograph::initRSA(void) {
+	_localKeypair = NULL;
+	_remotePublicKey = NULL;
+
+
+	return 0;
+}
+
+int Cryptograph::generateRsaKeypair(EVP_PKEY **keypair) {
+	return 0;
+}
+
+int Cryptograph::RSAEncrypt() {
+	return 0;
+}
+
+int Cryptograph::RSADecrypt() {
+	return 0;
+}
+
+int Cryptograph::getRemotePublicKey() {
+	return 0;
+}
+
+int Cryptograph::setRemotePublicKey() {
+	return 0;
+}
+
+int Cryptograph::getLocalPrivateKey() {
+	return 0;
+}
+
+int Cryptograph::getLocalPublicKey() {
+	return 0;
+}
+
+#endif
+
+#ifdef USE_AES
 int Cryptograph::initAES(void) {
 	/* Create encryption and decryption contexts */
 	_aesEncryptContext = EVP_CIPHER_CTX_new();
@@ -75,6 +112,7 @@ int Cryptograph::initAES(void) {
 
 	return 0;
 }
+
 int Cryptograph::generateAesKey(unsigned char **aesKey, unsigned char **aesIv) {
 
 	/* Allocate memory for keys and IV */
@@ -187,22 +225,22 @@ int Cryptograph::AESDecrypt(unsigned char *encryptedMessage, size_t encryptedMes
 	return ((int)decryptedMessageLength); // Total decrypted data length (data + padding)
 }
 
-
-EVP_CIPHER_CTX  *Cryptograph::getEncryptCTX(void) {
+EVP_CIPHER_CTX  *Cryptograph::getAesEncryptCTX(void) {
 	return _aesEncryptContext;
 }
 
-EVP_CIPHER_CTX  *Cryptograph::getDecryptCTX(void) {
+EVP_CIPHER_CTX  *Cryptograph::getAesDecryptCTX(void) {
 	return _aesDecryptContext;
 }
 
 unsigned char	*Cryptograph::getAesKey(void) {
 	return _aesKey;
 }
+
 unsigned char	*Cryptograph::getAesIv(void) {
 	return _aesIv;
 }
-
+#endif
 
 
 Cryptograph &Cryptograph::operator=(const Cryptograph & rhs)

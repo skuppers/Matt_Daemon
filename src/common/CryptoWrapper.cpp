@@ -2,20 +2,18 @@
 
 CryptoWrapper::CryptoWrapper(void)
 {
-	_cryptograph = NULL;
 	return ;
 }
 
 CryptoWrapper::CryptoWrapper(Cryptograph &cg) : _cryptograph(cg)
 {
-
 	return ;
 }
 
 CryptoWrapper::~CryptoWrapper(void)
 {
-	EVP_CIPHER_CTX_free(_cryptograph.getEncryptCTX());
-    EVP_CIPHER_CTX_free(_cryptograph.getDecryptCTX());
+	EVP_CIPHER_CTX_free(_cryptograph.getAesEncryptCTX());
+    EVP_CIPHER_CTX_free(_cryptograph.getAesDecryptCTX());
 
     free(_cryptograph.getAesKey());
     free(_cryptograph.getAesIv());

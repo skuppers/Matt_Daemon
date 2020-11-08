@@ -11,10 +11,24 @@
 #include <string.h>
 
 #define AES_ROUNDS 6
+#define RSA_KEYLEN 2048
 
 class Cryptograph
 {
 	private:
+#ifdef USE_RSA
+
+		/* RSA */
+		EVP_PKEY 		*_localKeypair;
+		EVP_PKEY        *_remotePublicKey;
+
+		EVP_CIPHER_CTX  *_rsaEncryptContext;
+    	EVP_CIPHER_CTX  *_rsaDecryptContext;
+
+		int 	initRSA();
+		int 	generateRsaKeypair(EVP_PKEY **keypair);
+
+#else
 		/* AES */
 		EVP_CIPHER_CTX 	*_aesEncryptContext;
 		EVP_CIPHER_CTX 	*_aesDecryptContext;
@@ -27,39 +41,47 @@ class Cryptograph
 		
 		int 	initAES(void);
     	int 	generateAesKey(unsigned char **aesKey, unsigned char **aesIv);
-/*		int		AESEncrypt(const unsigned char *message, size_t messageLength, unsigned char **encryptedMessage);
-		int		AESDecrypt(unsigned char *encryptedMessage, size_t encryptedMessageLength, unsigned char **decryptedMessage);
-*/
-		/* RSA */
-//		int initRSA();
 
+#endif //USE_RSA
 
 		/* General */
-		bool	_useRSA;
-
 		int init(void);
 		int deInit(void);
 
 	public:
 		Cryptograph(void);
-		Cryptograph(bool rsa);
 		~Cryptograph(void);
 		Cryptograph &operator=(Cryptograph const &rhs);
 
+#ifdef USE_RSA
+
+		/* RSA */
+
+		int 	RSAEncrypt();
+		int		RSADecrypt();
+
+		int		getRemotePublicKey();
+		int		setRemotePublicKey();
+
+		int		getLocalPrivateKey();
+		int		getLocalPublicKey();
+
+		//writekeytofile ?
+
+#else
 		/* AES */
 		int AESEncrypt(const unsigned char *message, size_t messageLength, unsigned char **encryptedMessage);
     	int AESDecrypt(unsigned char *encryptedMessage, size_t encryptedMessageLength, unsigned char **decryptedMessage);
 
-		EVP_CIPHER_CTX	*getEncryptCTX(void);
-		EVP_CIPHER_CTX	*getDecryptCTX(void);
+		EVP_CIPHER_CTX	*getAesEncryptCTX(void);
+		EVP_CIPHER_CTX	*getAesDecryptCTX(void);
 		unsigned char	*getAesKey(void);
     	unsigned char	*getAesIv(void);
 
+#endif //USE_RSA
+		
 
-
-		/* Communcation wrappers */
-/*		int sendCrypted();
-		int recvCrypted(); */
+		
 };
 
 std::ostream & operator<<(std::ostream &out, Cryptograph const &in);

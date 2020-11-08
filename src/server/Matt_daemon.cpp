@@ -29,6 +29,7 @@ void	daemonize(Tintin_reporter *reporter)
 	reporter->log(LOGLVL_INFO, "Succesfully daemonized.");
 }
 
+#define USE_RSA
 int		main(void)
 {
     PolicyManager policymgr(DFLT_LOCKFILE);
