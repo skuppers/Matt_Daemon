@@ -81,6 +81,22 @@ bool    Ben_Afk::connectToDaemon(void) {
 		return false;
 	}
 
+#ifdef USE_RSA
+
+	if (_cryptoWrapper->sendLocalPublicKey(_socket) != 0) {
+		std::cerr << "Error sending local RSA public key" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	if (_cryptoWrapper->receiveRemotePublicKey(_socket) != 0) {
+		std::cerr << "Error receving client RSA public key" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	std::cout << "RSA key exchange successfull!" << std::endl;
+	exit(1);
+#endif
+
+
+
 	/* Connection confirmation, Connection error, or Connection reset */
 
 	char *buff = NULL;

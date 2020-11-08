@@ -45,6 +45,7 @@ int		main(void)
 	
 	Cryptograph 	cg;
 	CryptoWrapper 	cw(cg);
+
 	
 	ConnectionManager conmgr(&logger, &cw);
 	if (conmgr.initSocket()) 

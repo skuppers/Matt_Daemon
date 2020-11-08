@@ -102,13 +102,27 @@ int     ConnectionManager::acceptNewClients(void) {
 	std::string clientNameString;
 
 	/* Accept TCP connection */
-	_logger->log(LOGLVL_INFO, "A new client is trying to connect.");
+	_logger->log(LOGLVL_INFO, "A new client is connecting.");
 	if ((newfd = accept(_listeningSocket, NULL, NULL)) == -1) {
 		_logger->log(LOGLVL_ERROR, "Error accepting client connection.");
 		return (-1);
 	}
 	else
 	{
+
+#ifdef USE_RSA
+
+		if (_cryptoWrapper->receiveRemotePublicKey(newfd) != 0
+			|| _cryptoWrapper->sendLocalPublicKey(newfd) != 0) {
+			_logger->log(LOGLVL_ERROR, "The RSA key exchange proccess failed with the client.");
+			return -1;
+		}
+		_logger->log(LOGLVL_INFO, "The RSA key exchange proccess succeeded.");
+	exit(1);
+#endif
+
+
+
 		/* Ensure that no more than 3 clients can connect simultaneously */
 		if (_activeClients >= MAX_CLIENTS) {
 			_logger->log(LOGLVL_WARN, "A client tried to connect, but no slot is avaible.");

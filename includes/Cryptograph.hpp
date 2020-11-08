@@ -63,11 +63,11 @@ class Cryptograph
 		int		RSADecrypt(unsigned char *encryptedMessage, size_t encryptedMessageLength, unsigned char **decryptedMessage,
 							unsigned char *encryptedKey, size_t encryptedKeyLength, unsigned char *iv, size_t ivLength);
 
-		int		getRemotePublicKey();
-		int		setRemotePublicKey();
+		int				getLocalPrivateKey(unsigned char **privateKey);
+		int				getLocalPublicKey(unsigned char **publickey);
 
-		int		getLocalPrivateKey(unsigned char **privateKey);
-		int		getLocalPublicKey(unsigned char **publickey);
+		EVP_PKEY		*getLocalPublicKeyEVP(void);
+		void			setRemotePublicKeyEVP(EVP_PKEY *remoteEVP_PKEY);
 
 		EVP_CIPHER_CTX	*getRsaEncryptCTX(void);
 		EVP_CIPHER_CTX	*getRsaDecryptCTX(void);

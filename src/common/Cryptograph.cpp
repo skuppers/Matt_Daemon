@@ -4,10 +4,8 @@ Cryptograph::Cryptograph(void)
 {
 	init();
 #ifdef  USE_RSA
-	std::cout << "Using RSA" << std::endl;
 	initRSA();
 #else
-	std::cout << "Using AES" << std::endl;
 	initAES();
 #endif  //USE_RSA
 	
@@ -50,6 +48,7 @@ int Cryptograph::init(void) {
 }
 
 //#ifdef USE_RSA
+
 int	Cryptograph::initRSA(void) {
 	_localKeypair = NULL;
 	_remotePublicKey = NULL;
@@ -58,7 +57,8 @@ int	Cryptograph::initRSA(void) {
   	_rsaDecryptContext = EVP_CIPHER_CTX_new(); // Check for alloc fails
 
 	generateRsaKeypair(&_localKeypair);
-	_remotePublicKey = _localKeypair;
+	generateRsaKeypair(&_remotePublicKey); // Remote keypair
+	//_remotePublicKey = _localKeypair;
 
 /*
 	std::cout << "Private Key file:" << std::endl;
@@ -109,9 +109,6 @@ int	Cryptograph::initRSA(void) {
 
 */
 
-
-
-	exit(0);
 
 	return 0;
 }
@@ -219,13 +216,6 @@ int Cryptograph::RSADecrypt(unsigned char *encryptedMessage, size_t encryptedMes
   	return (int)decryptedMessageLength;
 }
 
-int Cryptograph::getRemotePublicKey() {
-	return 0;
-}
-
-int Cryptograph::setRemotePublicKey() {
-	return 0;
-}
 
 
 int Cryptograph::getLocalPrivateKey(unsigned char **privateKey) {
@@ -247,6 +237,14 @@ int Cryptograph::getLocalPublicKey(unsigned char **publicKey) {
 }
 
 
+EVP_PKEY *Cryptograph::getLocalPublicKeyEVP(void) {
+	return _localKeypair;
+}
+
+void	Cryptograph::setRemotePublicKeyEVP(EVP_PKEY *remoteEVP_PKEY) {
+	_remotePublicKey = remoteEVP_PKEY;
+}
+
 int Cryptograph::bioToString(BIO *bio, unsigned char **string) {
 
 	size_t bioLength = BIO_pending(bio);
@@ -265,6 +263,7 @@ int Cryptograph::bioToString(BIO *bio, unsigned char **string) {
   	return (int)bioLength;
 }
 
+/* TODO */
 EVP_CIPHER_CTX	*getRsaEncryptCTX(void) {
 	return nullptr;
 }
