@@ -162,37 +162,6 @@ int Cryptograph::RSAEncrypt(const unsigned char *message, size_t messageLength,
 	encryptedMessageLength += encryptedHeaderSize;
 
 
-	//write(fd, encryptedMessageHeader, encryptedHeaderSize);
-
-	
-	//strncat((char *)*encryptedMessage, (const char*)encryptedMessageUpdate, updateBlockLength);
-	//strncat((char *)*encryptedMessage, (const char*)encryptedMessageFinal, finalBlockLength);
-
-//	std::cout << "Size net_ekey: " << sizeof(net_sessionKeyLength) <<  " sessionkey: "<< sessionKeyLength <<  " IV: "<< EVP_MAX_IV_LENGTH << std::endl;
-//	std::cout << "Total: " << encryptedHeaderSize << std::endl;
-
-/*	write(fd, (const char*)&net_sessionKeyLength, sizeof(net_sessionKeyLength));
-    write(fd, (const char*)sessionKey[0], sessionKeyLength);
-    write(fd, (const char*)iv, EVP_MAX_IV_LENGTH);
-*/
-/*
-	*encryptedMessage = (unsigned char*)malloc(encryptedMessageLength + 1);
-	memset(*encryptedMessage, 1, encryptedMessageLength + 1);
-
-	memcpy((char *)*encryptedMessage, (const char*)encryptedMessageHeader, encryptedHeaderSize);
-*/
-
-/*
-	
-	//write(fd, encryptedMessageHeader, encryptedHeaderSize);
-	write(fd, (const char*)&net_sessionKeyLength, sizeof(net_sessionKeyLength));
-    write(fd, (const char*)sessionKey[0], sessionKeyLength);
-    write(fd, (const char*)iv, EVP_MAX_IV_LENGTH);
-	close (fd);
-
-  	return encryptedHeaderSize;*/
-
-
 	
 	/* Insert message here */
 	unsigned int	updateBlockLength = 0;
@@ -209,8 +178,6 @@ int Cryptograph::RSAEncrypt(const unsigned char *message, size_t messageLength,
 
 
 
-	//write(fd, encryptedMessageUpdate, updateBlockLength);
-
 	/* Navy Seal */
 	unsigned int	finalBlockLength = 0;
 	unsigned char	encryptedMessageFinal[CRYPT_BUFFER_SIZE];
@@ -223,20 +190,13 @@ int Cryptograph::RSAEncrypt(const unsigned char *message, size_t messageLength,
   	}
 	encryptedMessageLength += finalBlockLength;
 
-	//write(fd, encryptedMessageFinal, finalBlockLength);
 	
 	*encryptedMessage = (unsigned char*)malloc(encryptedMessageLength + 1);
-	if (*encryptedMessage == NULL)
-		std::cout << "Allocation failed!!!" << std::endl;
+
 	memset(*encryptedMessage, 0, encryptedMessageLength + 1);
-	
-
 	memcpy(*encryptedMessage, encryptedMessageHeader, encryptedHeaderSize);
-
 	memcpy(*encryptedMessage + encryptedHeaderSize, encryptedMessageUpdate, updateBlockLength);
-
 	memcpy(*encryptedMessage + encryptedHeaderSize + updateBlockLength, encryptedMessageFinal, finalBlockLength);
-
 
   	return encryptedMessageLength;
 }
