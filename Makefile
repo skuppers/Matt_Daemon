@@ -41,10 +41,10 @@ CLIENT_CERTFILE = "$(RSA_FILE_PATH)$(CLIENT)$(RSA_CERTIFICATE)"
 SERVER_KEYFILE  = "$(RSA_FILE_PATH)$(SERVER)$(RSA_PRIVKEY)"
 SERVER_CERTFILE = "$(RSA_FILE_PATH)$(SERVER)$(RSA_CERTIFICATE)"
 
-	CREATE_KEY_DIRECTORY := $(shell mkdir $(RSA_FILE_PATH))
-
-	CREATE_KEYPAIR_CLIENT := $(shell openssl req -x509 -newkey rsa:$(RSA_KEYLENGTH) -keyout $(CLIENT_KEYFILE) -out $(CLIENT_CERTFILE) -days $(RSA_VALID_DAYS) -nodes -subj $(RSA_SUBJECT))
-	CREATE_KEYPAIR_SERVER := $(shell openssl req -x509 -newkey rsa:$(RSA_KEYLENGTH) -keyout $(SERVER_KEYFILE) -out $(SERVER_CERTFILE) -days $(RSA_VALID_DAYS) -nodes -subj $(RSA_SUBJECT))
+	CREATE_KEY_DIRECTORY := $(shell mkdir $(RSA_FILE_PATH) 2>&-)
+	
+	CREATE_KEYPAIR_CLIENT := $(shell openssl req -x509 -newkey rsa:$(RSA_KEYLENGTH) -keyout $(CLIENT_KEYFILE) -out $(CLIENT_CERTFILE) -days $(RSA_VALID_DAYS) -nodes -subj $(RSA_SUBJECT) 2>&-)
+	CREATE_KEYPAIR_SERVER := $(shell openssl req -x509 -newkey rsa:$(RSA_KEYLENGTH) -keyout $(SERVER_KEYFILE) -out $(SERVER_CERTFILE) -days $(RSA_VALID_DAYS) -nodes -subj $(RSA_SUBJECT) 2>&-)
 
 	CFLAGS += "-DCLIENT_PKEY=\"$(CLIENT_KEYFILE)\""
 	CFLAGS += "-DCLIENT_CERT=\"$(CLIENT_CERTFILE)\""
