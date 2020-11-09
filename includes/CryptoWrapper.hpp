@@ -15,13 +15,11 @@
 #define DENY_AUTHENTICATION 	"DENY_GTFO"
 #define AUTH_CONFIRM_LENGTH		10
 
-#define PUBKEY_FILE_PATH		"/var/run/matt_daemon/"
-
 class CryptoWrapper
 {
 	private:
 		Cryptograph _cryptograph;
-		char		*readPEMFile(FILE *pemFile);
+		char		*PEMFileToStr(FILE *pemFile);
 	public:
 		CryptoWrapper(void);
 		CryptoWrapper(Cryptograph &cg);

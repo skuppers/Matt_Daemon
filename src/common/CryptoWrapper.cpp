@@ -33,8 +33,9 @@ CryptoWrapper::~CryptoWrapper(void)
 #endif
 	return ;
 }
-/*
-char	*CryptoWrapper::readPEMFile(FILE *pemFile) {
+
+// #ifdef USE_RSA
+char	*CryptoWrapper::PEMFileToStr(FILE *pemFile) {
 	long	fsize = 0;
 	char	*pemBuffer = NULL;
 
@@ -50,14 +51,34 @@ char	*CryptoWrapper::readPEMFile(FILE *pemFile) {
 	return pemBuffer;
 }
 
-int		CryptoWrapper::sendLocalPublicKey(int sockfd) {
+int		CryptoWrapper::sendLocalCertificate(int sockfd) {
 
 	size_t 	sentBytes;
 	FILE 	*fileptr = NULL;
 	char	*PEMFile = NULL;
 
+	std::string pemFile;
+
+	if (__progname == CLIENT_NAME) {
+#ifdef CLIENT_CERTFILE
+		pemFile = CLIENT_CERTFILE;
+#else
+		std::cout << "Fatal error int sendLocalCertificate(): no CLIENT_CERTFILE defined!" << std::endl;
+		exit(EXIT_FAILURE);
+#endif
+
+	}else if (__progname == SERVER_NAME) {
+#ifdef SERVER_CERTFILE
+		pemFile = SERVER_CERTFILE;
+#else
+		std::cout << "Fatal error int sendLocalCertificate(): no SERVER_CERTFILE defined!" << std::endl;
+		exit(EXIT_FAILURE);
+#endif
+	}
+
 	std::string progName = __progname;
 	std::string pemFile  = PUBKEY_FILE_PATH + progName + "_local.public.pem";
+
 
 	if ((fileptr = fopen(pemFile.c_str(), "w+")) == NULL)
 	{
@@ -83,7 +104,7 @@ int		CryptoWrapper::sendLocalPublicKey(int sockfd) {
 	return 0;
 }
 
-int 	CryptoWrapper::receiveRemotePublicKey(int sockfd) {
+int 	CryptoWrapper::receiveRemoteCertificate(int sockfd) {
 
 	size_t		receivedBytes;
 	FILE 		*fileptr = NULL;
@@ -124,7 +145,8 @@ int 	CryptoWrapper::receiveRemotePublicKey(int sockfd) {
 
 	return (0);
 }
-*/
+//#endif
+
 int		CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 	int 			encryptedMessageLength;
 	unsigned char 	*encryptedMessage = NULL;

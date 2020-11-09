@@ -11,6 +11,52 @@ CFLAGS += -D _GNU_SOURCE
 
 LIBCRYPTO += -lcrypto
 
+#------------------------------- AUTHENTICATION -------------------------------#
+
+DEFAULT_AUTHENTICATION_PASSWORD="42born2code"
+
+ifneq ($(password),)
+	CFLAGS += "-DAUTH_PASSWORD=\"$(password)\""
+else
+	CFLAGS += "-DAUTH_PASSWORD=\"$(DEFAULT_AUTHENTICATION_PASSWORD)\""
+endif
+
+#--------------------------------- AES / RSA ----------------------------------#
+
+ifeq ($(use),rsa)
+
+	CFLAGS += "-DUSE_RSA"
+
+RSA_PRIVKEY      = "_private.pem"
+RSA_CERTIFICATE  = "_cert.pem"
+
+RSA_NEW_x509     = "openssl req -x509"
+
+RSA_KEYLENGTH    = 2048
+RSA_VALID_DAYS   = 365
+RSA_SUBJECT	     = "/C=FR/ST=Paris/L=France/O=42born2code/OU=School/CN=www.42.fr"
+RSA_FILE_PATH    = "/var/run/matt_daemon/"
+
+CLIENT_KEYFILE  = $(RSA_FILE_PATH)$(CLIENT)$(RSA_PRIVKEY)
+CLIENT_CERTFILE = $(RSA_FILE_PATH)$(CLIENT)$(RSA_CERTIFICATE)
+
+SERVER_KEYFILE  = $(RSA_FILE_PATH)$(SERVER)$(RSA_PRIVKEY)
+SERVER_CERTFILE = $(RSA_FILE_PATH)$(SERVER)$(RSA_CERTIFICATE)
+
+
+	CREATE_KEYPAIR_CLIENT := $(shell $(RSA_NEW_x509) -newkey rsa:$(RSA_KEYLENGTH) -keyout $(CLIENT_KEYFILE) -out $(CLIENT_CERTFILE) -days $(RSA_VALID_DAYS) -nodes -subj $(RSA_SUBJECT))
+	CREATE_KEYPAIR_SERVER := $(shell $(RSA_NEW_x509) -newkey rsa:$(RSA_KEYLENGTH) -keyout $(SERVER_KEYFILE) -out $(SERVER_CERTFILE) -days $(RSA_VALID_DAYS) -nodes -subj $(RSA_SUBJECT))
+
+	CFLAGS += "-DCLIENT_PKEY=$(CLIENT_KEYFILE) -DCLIENT_CERT=$(CLIENT_CERTFILE)"
+	CFLAGS += "-DSERVER_PKEY=$(SERVER_KEYFILE) -DSERVER_CERT=$(SERVER_CERTFILE)"
+	CFLAGS += "-DCLIENT_NAME=$(CLIENT) -DSERVER_NAME=$(SERVER)"
+
+else
+	CFLAGS += "-DUSE_AES"
+endif
+
+#---------------------------------- DEBUGGING --------------------------------#
+
 # Compiler Debug Flags
 ifeq ($(d), 1)
 	CFLAGS += -g3
@@ -32,25 +78,6 @@ endif
 # Debug Dir
 DSYM += $(NAME).dSYM
 DSYM += $(DBNAME).dSYM
-
-
-#------------------------------- AUTHENTICATION -------------------------------#
-
-DEFAULT_AUTHENTICATION_PASSWORD="42born2code"
-
-ifneq ($(password),)
-	CFLAGS += "-DAUTH_PASSWORD=\"$(password)\""
-else
-	CFLAGS += "-DAUTH_PASSWORD=\"$(DEFAULT_AUTHENTICATION_PASSWORD)\""
-endif
-
-#--------------------------------- AES / RSA ----------------------------------#
-
-ifeq ($(use),rsa)
-	CFLAGS += "-DUSE_RSA"
-else
-	CFLAGS += "-DUSE_AES"
-endif
 
 #---------------------------------- INCLUDES ----------------------------------#
 
@@ -115,24 +142,24 @@ COMMON_OBJS = $(patsubst %.cpp, $(PATH_OBJS)%.o, $(COMMON_SRCS))
 
 all: $(CLIENT) $(SERVER)
 
-$(CLIENT): $(PATH_OBJS) $(CLIENT_OBJS) $(COMMON_OBJS)
-	$(CC) $(CFLAGS) $(I_INCLUDES) $(CLIENT_OBJS) $(COMMON_OBJS) $(LIBCRYPTO) -o $@
+$(CLIENT): $(PATH_OBJS) $(CLIENT_OBJS) $(COMMON_OBJS) $(RSA_CLIENT)
+	$(CC) $(CFLAGS) $(CLIENTFLAGS) $(I_INCLUDES) $(CLIENT_OBJS) $(COMMON_OBJS) $(LIBCRYPTO) -o $@
 	printf "$@ is ready.\n"
 
 $(CLIENT_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADER) Makefile
-	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(CLIENTFLAGS) $(I_INCLUDES) -c $< -o $@
 
 
-$(SERVER): $(PATH_OBJS) $(DAEMON_OBJS) $(COMMON_OBJS)
-	$(CC) $(CFLAGS) $(I_INCLUDES) $(DAEMON_OBJS) $(COMMON_OBJS) $(LIBCRYPTO) -o $@
+$(SERVER): $(PATH_OBJS) $(DAEMON_OBJS) $(COMMON_OBJS) $(RSA_SERVER)
+	$(CC) $(CFLAGS) $(SERVERFLAGS) $(I_INCLUDES) $(DAEMON_OBJS) $(COMMON_OBJS) $(LIBCRYPTO) -o $@
 	printf "$@ is ready.\n"
 
 $(DAEMON_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADER) Makefile
-	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(SERVERFLAGS) $(I_INCLUDES) -c $< -o $@
 
 
 $(COMMON_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADER) Makefile
-	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(CLIENTFLAGS) $(SERVERFLAGS) $(I_INCLUDES) -c $< -o $@
 
 $(PATH_OBJS):
 	mkdir $@
@@ -145,6 +172,12 @@ clean:
 	$(RM) -R $(DSYM)
 	printf "Objs from $(SERVER) removed\n"
 	printf "Objs from $(CLIENT) removed\n"
+	$(RM) $(CLIENT)$(RSA_PRIVKEY)
+	$(RM) $(CLIENT)$(RSA_CERTIFICATE)
+	printf "Client RSA keys deleted\n"
+	$(RM) $(SERVER)$(RSA_PRIVKEY)
+	$(RM) $(SERVER)$(RSA_CERTIFICATE)
+	printf "Server RSA keys deleted\n"
 
 fclean: clean
 	$(RM) $(SERVER)

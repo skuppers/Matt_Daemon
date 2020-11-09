@@ -62,7 +62,7 @@ int	Cryptograph::initRSA(void) {
 
 
 
-
+/*
 	std::cout << "Private Key file:" << std::endl;
 	PEM_write_PrivateKey(stdout, _localKeypair, NULL, NULL, 0, 0, NULL);
 
@@ -117,7 +117,7 @@ int	Cryptograph::initRSA(void) {
 
 	return 0;
 }
-
+/*
 int Cryptograph::generateRsaKeypair(EVP_PKEY **keypair) {
 
 	EVP_PKEY_CTX *context = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
@@ -138,7 +138,7 @@ int Cryptograph::generateRsaKeypair(EVP_PKEY **keypair) {
 
 	return 0;
 }
-
+*/
 EVP_PKEY 	*Cryptograph::readx509Certificate(const char *certfile) {
 
 	X509 		*x509;
