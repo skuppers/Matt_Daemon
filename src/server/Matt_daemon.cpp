@@ -43,9 +43,7 @@ int		main(void)
 
 	//daemonize(&logger);
 	
-	Cryptograph 	cg;
-	CryptoWrapper 	cw(cg);
-
+	CryptoWrapper 	cw;
 	
 	ConnectionManager conmgr(&logger, &cw);
 	if (conmgr.initSocket()) 

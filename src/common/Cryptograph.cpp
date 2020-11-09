@@ -56,7 +56,9 @@ int	Cryptograph::initRSA(void) {
 	_rsaEncryptContext = EVP_CIPHER_CTX_new();
   	_rsaDecryptContext = EVP_CIPHER_CTX_new(); // Check for alloc fails
 
-	generateRsaKeypair(&_localKeypair);
+//	generateRsaKeypair(&_localKeypair);
+
+
 //	generateRsaKeypair(&_remotePublicKey); // Remote keypair
 //	_remotePublicKey = _localKeypair;
 
@@ -117,73 +119,6 @@ int	Cryptograph::initRSA(void) {
 
 	return 0;
 }
-/*
-int Cryptograph::generateRsaKeypair(EVP_PKEY **keypair) {
-
-	EVP_PKEY_CTX *context = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
-
-	if(EVP_PKEY_keygen_init(context) <= 0) {
-    	return -1;
-	}
-
-	if(EVP_PKEY_CTX_set_rsa_keygen_bits(context, RSA_KEYLEN) <= 0) {
-    	return -1;
-  	}
-
-	if(EVP_PKEY_keygen(context, keypair) <= 0) {
-    	return -1;
-  	}
-
-	EVP_PKEY_CTX_free(context);
-
-	return 0;
-}
-*/
-EVP_PKEY 	*Cryptograph::readx509Certificate(const char *certfile) {
-
-	X509 		*x509;
-	EVP_PKEY	*pkey;
-	FILE 		*fp;
-	
-	if (!(fp = fopen(certfile, "r")))
-		return NULL;
-
-	x509 = PEM_read_X509(fp, NULL, 0, NULL);
-
-	fclose(fp);
-
-	if (x509 == NULL)
-	{
-		ERR_print_errors_fp(stderr);
-		return NULL;   
-	}
-
-	if ((pkey = X509_extract_key(x509)) == NULL) 
-		ERR_print_errors_fp(stderr);
-
-	X509_free(x509);
-
-	return pkey;
-}
-
-EVP_PKEY 	*Cryptograph::ReadPrivateKey(const char *keyfile) {
-
-	EVP_PKEY	*pkey;
-	FILE 		*fp;
-	
-	if (!(fp = fopen(keyfile, "r")))
-		return NULL;
-
-	pkey = PEM_read_PrivateKey(fp, NULL, 0, NULL);
-
-	fclose (fp);
-
-  	if (pkey == NULL) 
-		ERR_print_errors_fp (stderr);   
-
-	return pkey;
-}
-
 
 int Cryptograph::RSAEncrypt(const unsigned char *message, size_t messageLength,
 	unsigned char **encryptedMessage,

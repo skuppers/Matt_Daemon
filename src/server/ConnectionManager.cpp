@@ -113,8 +113,8 @@ int     ConnectionManager::acceptNewClients(void) {
 		/*									*/
 #ifdef USE_RSA
 
-		if (_cryptoWrapper->receiveRemotePublicKey(newfd) != 0
-			|| _cryptoWrapper->sendLocalPublicKey(newfd) != 0) {
+		if (_cryptoWrapper->receiveRemoteCertificate(newfd) != 0
+			|| _cryptoWrapper->sendLocalCertificate(newfd) != 0) {
 			_logger->log(LOGLVL_ERROR, "The RSA key exchange proccess failed with the client.");
 			return -1;
 		}
@@ -293,8 +293,8 @@ pid_t    ConnectionManager::popShell(int filedesc) {
 				break ;
 			}
 
-			char *joined = (char*)malloc(strlen(userCMD) + strlen(EXEC_CMD) + 1);
-			bzero(joined, strlen(userCMD) + strlen(EXEC_CMD) + 1);
+			char *joined = (char*)malloc(strlen(userCMD) + strlen(EXEC_CMD) + 2);
+			bzero(joined, strlen(userCMD) + strlen(EXEC_CMD) + 2);
 			strncpy(joined, userCMD, strlen(userCMD));
 			strncat(joined, EXEC_CMD, strlen(EXEC_CMD));
 			free(userCMD);

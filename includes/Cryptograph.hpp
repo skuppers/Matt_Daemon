@@ -91,8 +91,6 @@ class Cryptograph
 
 //#endif //USE_RSA
 		
-
-		
 };
 
 std::ostream & operator<<(std::ostream &out, Cryptograph const &in);

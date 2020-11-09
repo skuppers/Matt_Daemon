@@ -4,174 +4,181 @@ extern char	*__progname;
 
 CryptoWrapper::CryptoWrapper(void)
 {
-	return ;
-}
-
-CryptoWrapper::CryptoWrapper(Cryptograph &cg) : _cryptograph(cg)
-{
-	mkdir(PUBKEY_FILE_PATH, 0744);
+	_cryptograph = new Cryptograph();
+	_keyLoader = new KeyLoader();
 	return ;
 }
 
 CryptoWrapper::~CryptoWrapper(void)
 {
-	
 #ifdef USE_RSA
-	EVP_PKEY_free(_cryptograph.getLocalKeypairEVP());
-	EVP_PKEY_free(_cryptograph.getRemotePublicEVP());
+	EVP_PKEY_free(_cryptograph->getLocalKeypairEVP());
+	EVP_PKEY_free(_cryptograph->getRemotePublicEVP());
 
-	// Local key pair?
-
-  	EVP_CIPHER_CTX_free(_cryptograph.getRsaEncryptCTX());
-  	EVP_CIPHER_CTX_free(_cryptograph.getRsaDecryptCTX());
+  	EVP_CIPHER_CTX_free(_cryptograph->getRsaEncryptCTX());
+  	EVP_CIPHER_CTX_free(_cryptograph->getRsaDecryptCTX());
 #else
-	EVP_CIPHER_CTX_free(_cryptograph.getAesEncryptCTX());
-	EVP_CIPHER_CTX_free(_cryptograph.getAesDecryptCTX());
+	EVP_CIPHER_CTX_free(_cryptograph->getAesEncryptCTX());
+	EVP_CIPHER_CTX_free(_cryptograph->getAesDecryptCTX());
 
-	free(_cryptograph.getAesKey());
-	free(_cryptograph.getAesIv());
+	free(_cryptograph->getAesKey());
+	free(_cryptograph->getAesIv());
 #endif
 	return ;
 }
 
-// #ifdef USE_RSA
-char	*CryptoWrapper::PEMFileToStr(FILE *pemFile) {
-	long	fsize = 0;
-	char	*pemBuffer = NULL;
-
-	fseek(pemFile, 0, SEEK_END);
-	fsize = ftell(pemFile);
-	fseek(pemFile, 0, SEEK_SET);
-
-	pemBuffer = (char *)malloc(fsize + 1);
-	fread(pemBuffer, 1, fsize, pemFile);
-
-	pemBuffer[fsize] = 0;
-
-	return pemBuffer;
-}
+#ifdef USE_RSA
 
 int		CryptoWrapper::sendLocalCertificate(int sockfd) {
 
-	size_t 	sentBytes;
-	FILE 	*fileptr = NULL;
-	char	*PEMFile = NULL;
+	int			readBytes;
+	int 		sentBytes;
 
-	std::string pemFile;
+	FILE 		*fileptr 				= NULL;
+	char 		*certificateFileName 	= NULL;
+	char		*certificateFileContent	= NULL;
 
-	if (__progname == CLIENT_NAME) {
-#ifdef CLIENT_CERTFILE
-		pemFile = CLIENT_CERTFILE;
-#else
-		std::cout << "Fatal error int sendLocalCertificate(): no CLIENT_CERTFILE defined!" << std::endl;
-		exit(EXIT_FAILURE);
-#endif
 
-	}else if (__progname == SERVER_NAME) {
-#ifdef SERVER_CERTFILE
-		pemFile = SERVER_CERTFILE;
-#else
-		std::cout << "Fatal error int sendLocalCertificate(): no SERVER_CERTFILE defined!" << std::endl;
-		exit(EXIT_FAILURE);
-#endif
+	/* Define the path for reading the local certificate		*/
+	/* The name will be defined by whoever uses this function	*/
+	/* Either the client or the server							*/
+	if (strncmp(__progname, CLIENT_NAME, strlen(CLIENT_NAME)) == 0) {
+		certificateFileName = (char*)CLIENT_CERT;
+	} else if (strncmp(__progname, SERVER_NAME, strlen(SERVER_NAME)) == 0) {
+		certificateFileName = (char*)SERVER_CERT;
+	} else {
+		std::cerr << "The local certificate file name could not be determined!" << std::endl;
+		return -1;
 	}
 
-	std::string progName = __progname;
-	std::string pemFile  = PUBKEY_FILE_PATH + progName + "_local.public.pem";
-
-
-	if ((fileptr = fopen(pemFile.c_str(), "w+")) == NULL)
-	{
-		printf("Unable to create file: %s\n", strerror(errno));
-		exit(EXIT_FAILURE);
+	/* Open the previously defined file, in read mode	*/
+	/* for reading the local certificate 				*/
+	if ((fileptr = fopen(certificateFileName, "r+")) == NULL) {
+		std::cerr << "Unable to open the local certificate file: " << strerror(errno) << std::endl;
+		return -1;
 	}
 
-	if (PEM_write_PUBKEY(fileptr, _cryptograph.getLocalKeypairEVP()) == 0) {
-		printf("Failed to write pemfile: %s\n", strerror(errno));
-	}
+	/* Read the content of the file and store it	*/
+	/* into the 'certificateFileContent' buffer		*/
+	readBytes = _keyLoader->CertificateToStr(fileptr, &certificateFileContent);
 
-	fflush(fileptr);
-	PEMFile = readPEMFile(fileptr);
+	/* Close the file */
 	fclose(fileptr);
 
-	if ((sentBytes = send(sockfd, PEMFile, strlen(PEMFile), 0)) <= 0) {
-		printf("Failed to send pubkey: %s\n", strerror(errno));
-		exit(EXIT_FAILURE);
+	/* Handle reading error */
+	if (readBytes <= 0) {
+		std::cerr << "Unable to read the local certificate file: " << strerror(errno) << std::endl;
+		return -1;
 	}
 
-	free(PEMFile);
+	/* Send over the local certificate */
+	if ((sentBytes = send(sockfd, certificateFileContent, readBytes, 0)) <= 0) {
+		std::cerr << "Failed to send the local certificate: " << strerror(errno) << std::endl;
+		return -1;
+	}
+
+	/* Check for partial send */
+	if (sentBytes != readBytes) {
+		std::cerr << "Failed to send the entire local certificate!" << std::endl;
+		return -1;
+	}
 
 	return 0;
 }
 
 int 	CryptoWrapper::receiveRemoteCertificate(int sockfd) {
 
-	size_t		receivedBytes;
-	FILE 		*fileptr = NULL;
-	char 		pemBuffer[PEM_BUFFER];
-	EVP_PKEY 	*remotePubKey = NULL;
+	int				receivedBytes;
+	std::string 	remoteCertificateName;
+	char 			certRecvBuffer[CERT_BUFFER];
+	
+	FILE 			*fileptr = NULL;
+	EVP_PKEY 		*remoteCertificate = NULL;
 
-	bzero(pemBuffer, PEM_BUFFER);
-	if ((receivedBytes = recv(sockfd, pemBuffer, PEM_BUFFER - 1, 0)) <= 0) {
-		printf("Failed to recv pubkey: %s\n", strerror(errno));
-		exit(1);
+	/* Receiving the remote certificate and store it into the 'certRecvBuffer' buffer */
+	bzero(certRecvBuffer, CERT_BUFFER);
+	if ((receivedBytes = recv(sockfd, certRecvBuffer, CERT_BUFFER - 1, 0)) <= 0) {
+		std::cerr << "Failed to receive the remote certificate: " << strerror(errno) << std::endl;
+		return -1;
 	}
 
-	std::string progName = __progname;
-	std::string pemFile  = PUBKEY_FILE_PATH + progName + "_remote.public.pem";
-
-	if ((fileptr = fopen(pemFile.c_str(), "w+")) == NULL) {
-		printf("Unable to create file.\n");
-		exit(EXIT_FAILURE);
+	/* Define the path for storing the remote certificate		*/
+	/* The name will be defined by whoever uses this function	*/
+	/* Either the client or the server							*/
+	if (strncmp(__progname, CLIENT_NAME, strlen(CLIENT_NAME)) == 0) {
+		remoteCertificateName = CLIENT_CERT + std::string(".remote");
+	} else if (strncmp(__progname, SERVER_NAME, strlen(SERVER_NAME)) == 0) {
+		remoteCertificateName = SERVER_CERT + std::string(".remote");
+	} else {
+		std::cerr << "The remote certificate file name could not be determined!" << std::endl;
+		return -1;
 	}
 
-	if (fputs(pemBuffer, fileptr) <= 0) {
-		printf("Unable to write pemBuffer to file: %s\n", strerror(errno));
-		exit(EXIT_FAILURE);
+	/* Create/open the previously defined file, in write mode	*/
+	/* for storing the remote certificate 						*/
+	if ((fileptr = fopen(remoteCertificateName.c_str(), "w+")) == NULL) {
+		std::cerr << "Unable to create the remote certificate file." << std::endl;
+		return -1;
 	}
 
+	/* Write the content of the 'certRecvBuffer' into the file */
+	if (fputs(certRecvBuffer, fileptr) <= 0) {
+		std::cerr << "Unable to write the remote certificate to file: " << strerror(errno) << std::endl;
+		return -1;
+	}
+
+	/* Flush and close the file */
 	fflush(fileptr);
-	fseek(fileptr, 0, SEEK_SET);
-
-	if (PEM_read_PUBKEY(fileptr, &remotePubKey, NULL, 0) == NULL) {
-		printf("Failed to read remote pubkey.\n");
-		ERR_print_errors_fp(stderr);
-		exit(1);
-	}
-
 	fclose(fileptr);
 
-	_cryptograph.setRemotePublicKeyEVP(remotePubKey);
+	/* Extract the EVP_PKEY from the certificate file */
+	remoteCertificate = _keyLoader->readx509Certificate(remoteCertificateName.c_str());
+	if (remoteCertificate == NULL) {
+		std::cerr << "Failed to read the remote certificate file." << std::endl;
+		return -1;
+	}
+
+	/* Save the EBP_PKEY into a private variable for later use */
+	_cryptograph->setRemotePublicKeyEVP(remoteCertificate);
 
 	return (0);
 }
-//#endif
+
+#endif
 
 int		CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
-	int 			encryptedMessageLength;
+	int 			encryptedMessageLength = 0;
 	unsigned char 	*encryptedMessage = NULL;
 	size_t			sentBytes;
 
 #ifdef USE_RSA
 
+	(void)sentBytes;
+	(void)sockfd;
+	(void)encryptedMessageLength;
+	(void)encryptedMessage;
+	(void)buf;
+	(void)len;
+
+/*
 	unsigned char 	*sessionKey;
 	unsigned char 	*iv;
 	size_t 			sessionKeyLength;
 	size_t 			ivLength;
 	
-	encryptedMessageLength = _cryptograph.RSAEncrypt((const unsigned char*)buf, len + 1,
+
+	encryptedMessageLength = _cryptograph->RSAEncrypt((const unsigned char*)buf, len + 1,
    		&encryptedMessage, &sessionKey, &sessionKeyLength,
 		&iv, &ivLength);
 	if (encryptedMessageLength == -1) {
 		printf("Error encrypting message\n");
 		exit (-1);
 	}
-
-	/* Send over the sessionkey first */
+*/
 
 #else
 	/* Encrypt message with the cryptograph */
-	encryptedMessageLength = _cryptograph.AESEncrypt((const unsigned char*)buf, len + 1, &encryptedMessage);
+	encryptedMessageLength = _cryptograph->AESEncrypt((const unsigned char*)buf, len + 1, &encryptedMessage);
 	if (encryptedMessageLength == -1) {
 		printf("Error encrypting message\n");
 		exit (-1);
@@ -193,7 +200,11 @@ int 	CryptoWrapper::recvEncrypted(int sockfd, char **decrypt_buffer) {
 	size_t			receivedBytes;
 
 #ifdef USE_RSA
-
+	(void)decryptedMessageLength;
+	(void)encryptedMessageBuffer;
+	(void)receivedBytes;
+	(void)sockfd;
+	(void)decrypt_buffer;
 #else
 	/* Receive the encrypted message */
 	bzero(encryptedMessageBuffer, GENERIC_BUFFER_SIZE);
@@ -202,7 +213,7 @@ int 	CryptoWrapper::recvEncrypted(int sockfd, char **decrypt_buffer) {
 		return receivedBytes;
 
 	/* Decrypt the message with the cryptograph */
-	decryptedMessageLength = _cryptograph.AESDecrypt((unsigned char*)encryptedMessageBuffer,
+	decryptedMessageLength = _cryptograph->AESDecrypt((unsigned char*)encryptedMessageBuffer,
 														receivedBytes, (unsigned char **)decrypt_buffer);
 	if (decryptedMessageLength == -1) {
 		printf("Error decrypting message\n");

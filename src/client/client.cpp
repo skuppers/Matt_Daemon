@@ -14,8 +14,7 @@ int main(int ac, char **av)
     if (ac < 3)
         printUsage();
 
-    Cryptograph     cg;
-    CryptoWrapper   cw(cg);
+    CryptoWrapper   cw;
 
     Ben_Afk benny(av[1], atoi(av[2]), &cw);
 
