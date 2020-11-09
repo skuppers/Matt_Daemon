@@ -30,26 +30,28 @@ ifeq ($(use),rsa)
 RSA_PRIVKEY      = "_private.pem"
 RSA_CERTIFICATE  = "_cert.pem"
 
-RSA_NEW_x509     = "openssl req -x509"
-
 RSA_KEYLENGTH    = 2048
 RSA_VALID_DAYS   = 365
 RSA_SUBJECT	     = "/C=FR/ST=Paris/L=France/O=42born2code/OU=School/CN=www.42.fr"
-RSA_FILE_PATH    = "/var/run/matt_daemon/"
+RSA_FILE_PATH    = "/tmp/matt_daemon/"
 
-CLIENT_KEYFILE  = $(RSA_FILE_PATH)$(CLIENT)$(RSA_PRIVKEY)
-CLIENT_CERTFILE = $(RSA_FILE_PATH)$(CLIENT)$(RSA_CERTIFICATE)
+CLIENT_KEYFILE  = "$(RSA_FILE_PATH)$(CLIENT)$(RSA_PRIVKEY)"
+CLIENT_CERTFILE = "$(RSA_FILE_PATH)$(CLIENT)$(RSA_CERTIFICATE)"
 
-SERVER_KEYFILE  = $(RSA_FILE_PATH)$(SERVER)$(RSA_PRIVKEY)
-SERVER_CERTFILE = $(RSA_FILE_PATH)$(SERVER)$(RSA_CERTIFICATE)
+SERVER_KEYFILE  = "$(RSA_FILE_PATH)$(SERVER)$(RSA_PRIVKEY)"
+SERVER_CERTFILE = "$(RSA_FILE_PATH)$(SERVER)$(RSA_CERTIFICATE)"
 
+	CREATE_KEY_DIRECTORY := $(shell mkdir $(RSA_FILE_PATH))
 
-	CREATE_KEYPAIR_CLIENT := $(shell $(RSA_NEW_x509) -newkey rsa:$(RSA_KEYLENGTH) -keyout $(CLIENT_KEYFILE) -out $(CLIENT_CERTFILE) -days $(RSA_VALID_DAYS) -nodes -subj $(RSA_SUBJECT))
-	CREATE_KEYPAIR_SERVER := $(shell $(RSA_NEW_x509) -newkey rsa:$(RSA_KEYLENGTH) -keyout $(SERVER_KEYFILE) -out $(SERVER_CERTFILE) -days $(RSA_VALID_DAYS) -nodes -subj $(RSA_SUBJECT))
+	CREATE_KEYPAIR_CLIENT := $(shell openssl req -x509 -newkey rsa:$(RSA_KEYLENGTH) -keyout $(CLIENT_KEYFILE) -out $(CLIENT_CERTFILE) -days $(RSA_VALID_DAYS) -nodes -subj $(RSA_SUBJECT))
+	CREATE_KEYPAIR_SERVER := $(shell openssl req -x509 -newkey rsa:$(RSA_KEYLENGTH) -keyout $(SERVER_KEYFILE) -out $(SERVER_CERTFILE) -days $(RSA_VALID_DAYS) -nodes -subj $(RSA_SUBJECT))
 
-	CFLAGS += "-DCLIENT_PKEY=$(CLIENT_KEYFILE) -DCLIENT_CERT=$(CLIENT_CERTFILE)"
-	CFLAGS += "-DSERVER_PKEY=$(SERVER_KEYFILE) -DSERVER_CERT=$(SERVER_CERTFILE)"
-	CFLAGS += "-DCLIENT_NAME=$(CLIENT) -DSERVER_NAME=$(SERVER)"
+	CFLAGS += "-DCLIENT_PKEY=\"$(CLIENT_KEYFILE)\""
+	CFLAGS += "-DCLIENT_CERT=\"$(CLIENT_CERTFILE)\""
+	CFLAGS += "-DSERVER_PKEY=\"$(SERVER_KEYFILE)\""
+	CFLAGS += "-DSERVER_CERT=\"$(SERVER_CERTFILE)\""
+	CFLAGS += "-DCLIENT_NAME=\"$(CLIENT)\""
+	CFLAGS += "-DSERVER_NAME=\"$(SERVER)\""
 
 else
 	CFLAGS += "-DUSE_AES"
@@ -92,6 +94,7 @@ vpath %.hpp $(INCLUDES_MATTDAEMON)
 # Common
 HEADER += Cryptograph.hpp
 HEADER += CryptoWrapper.hpp
+HEADER += KeyLoader.hpp
 
 # client
 HEADER += Ben_Afk.hpp
@@ -111,6 +114,7 @@ PATH_COMMON_SRCS += src/common/
 
 COMMON_SRCS += Cryptograph.cpp
 COMMON_SRCS += CryptoWrapper.cpp
+COMMON_SRCS += KeyLoader.cpp
 
 ### CLIENT
 
@@ -143,23 +147,23 @@ COMMON_OBJS = $(patsubst %.cpp, $(PATH_OBJS)%.o, $(COMMON_SRCS))
 all: $(CLIENT) $(SERVER)
 
 $(CLIENT): $(PATH_OBJS) $(CLIENT_OBJS) $(COMMON_OBJS) $(RSA_CLIENT)
-	$(CC) $(CFLAGS) $(CLIENTFLAGS) $(I_INCLUDES) $(CLIENT_OBJS) $(COMMON_OBJS) $(LIBCRYPTO) -o $@
+	$(CC) $(CFLAGS) $(I_INCLUDES) $(CLIENT_OBJS) $(COMMON_OBJS) $(LIBCRYPTO) -o $@
 	printf "$@ is ready.\n"
 
 $(CLIENT_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADER) Makefile
-	$(CC) $(CFLAGS) $(CLIENTFLAGS) $(I_INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
 
 
 $(SERVER): $(PATH_OBJS) $(DAEMON_OBJS) $(COMMON_OBJS) $(RSA_SERVER)
-	$(CC) $(CFLAGS) $(SERVERFLAGS) $(I_INCLUDES) $(DAEMON_OBJS) $(COMMON_OBJS) $(LIBCRYPTO) -o $@
+	$(CC) $(CFLAGS) $(I_INCLUDES) $(DAEMON_OBJS) $(COMMON_OBJS) $(LIBCRYPTO) -o $@
 	printf "$@ is ready.\n"
 
 $(DAEMON_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADER) Makefile
-	$(CC) $(CFLAGS) $(SERVERFLAGS) $(I_INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
 
 
 $(COMMON_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADER) Makefile
-	$(CC) $(CFLAGS) $(CLIENTFLAGS) $(SERVERFLAGS) $(I_INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
 
 $(PATH_OBJS):
 	mkdir $@
@@ -172,11 +176,11 @@ clean:
 	$(RM) -R $(DSYM)
 	printf "Objs from $(SERVER) removed\n"
 	printf "Objs from $(CLIENT) removed\n"
-	$(RM) $(CLIENT)$(RSA_PRIVKEY)
-	$(RM) $(CLIENT)$(RSA_CERTIFICATE)
+	$(RM) $(CLIENT_KEYFILE)
+	$(RM) $(CLIENT_CERTFILE)
 	printf "Client RSA keys deleted\n"
-	$(RM) $(SERVER)$(RSA_PRIVKEY)
-	$(RM) $(SERVER)$(RSA_CERTIFICATE)
+	$(RM) $(SERVER_KEYFILE)
+	$(RM) $(SERVER_CERTFILE)
 	printf "Server RSA keys deleted\n"
 
 fclean: clean
