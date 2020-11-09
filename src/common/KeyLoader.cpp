@@ -53,10 +53,9 @@ EVP_PKEY 	*KeyLoader::ReadPrivateKey(const char *keyfile) {
 
 	return pkey;
 }
-#include <iostream>
-#include <unistd.h>
-#include <string.h>
-int         KeyLoader::PEMFileToStr(FILE *pemFile, char **pemBuffer) {
+
+//TODO Error handling + memleaks of the pemBuffer
+int         KeyLoader::CertificateToStr(FILE *pemFile, char **pemBuffer) {
 	long	fsize = 0;
     size_t  readBytes;
 
@@ -64,16 +63,27 @@ int         KeyLoader::PEMFileToStr(FILE *pemFile, char **pemBuffer) {
 	fsize = ftell(pemFile);
 	fseek(pemFile, 0, SEEK_SET);
 
-    std::cout << "Allocating " << fsize + 1 << " bytes" << std::endl;
-	*pemBuffer = (char *)malloc(fsize + 16);
-    bzero(*pemBuffer, fsize + 16);
+	*pemBuffer = (char *)malloc(fsize + 1);
+    bzero(*pemBuffer, fsize + 1);
+
     if (*pemBuffer == NULL)
         return -1;
-
-    write(STDOUT_FILENO, "Check", 5);
-
-	readBytes = fread(*pemBuffer, 1, fsize, pemFile);
-
+        
+    readBytes = fread(*pemBuffer, 1, fsize, pemFile);
 
 	return readBytes;
+}
+
+KeyLoader &KeyLoader::operator=(const KeyLoader & rhs)
+{
+	if (this != &rhs)
+		*this = rhs;
+	return *this;
+}
+
+std::ostream &operator<<(std::ostream &out, KeyLoader const & pm)
+{
+	(void)pm;
+	out << "KeyLoader" << std::endl;
+	return out;
 }
