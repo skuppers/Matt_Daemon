@@ -145,8 +145,7 @@ int Cryptograph::RSAEncrypt(const unsigned char *message, size_t messageLength,
 		std::cerr << "Error in EVP_sealInit()" << std::endl;
     	return -1;
   	}
-	
-	int fd = open("debug.rsa", O_RDWR | O_CREAT, 0744);
+
 
 	/* Session keys & iv's */
 	net_sessionKeyLength = htonl(sessionKeyLength);
@@ -162,8 +161,6 @@ int Cryptograph::RSAEncrypt(const unsigned char *message, size_t messageLength,
 
 	encryptedMessageLength += encryptedHeaderSize;
 
-	std::cout << "encryptedHeaderSize: " << encryptedHeaderSize << std::endl;
-	std::cout << "encryptedMessageLength: " << encryptedMessageLength << std::endl;
 
 	//write(fd, encryptedMessageHeader, encryptedHeaderSize);
 
@@ -210,8 +207,7 @@ int Cryptograph::RSAEncrypt(const unsigned char *message, size_t messageLength,
   	}
 	encryptedMessageLength += updateBlockLength;
 
-	std::cout << "updateBlockLength: " << updateBlockLength << std::endl;
-	std::cout << "encryptedMessageLength: " << encryptedMessageLength << std::endl;
+
 
 	//write(fd, encryptedMessageUpdate, updateBlockLength);
 
@@ -227,9 +223,6 @@ int Cryptograph::RSAEncrypt(const unsigned char *message, size_t messageLength,
   	}
 	encryptedMessageLength += finalBlockLength;
 
-	std::cout << "finalBlockLength: " << finalBlockLength << std::endl;
-	std::cout << "encryptedMessageLength: " << encryptedMessageLength << std::endl;
-
 	//write(fd, encryptedMessageFinal, finalBlockLength);
 	
 	*encryptedMessage = (unsigned char*)malloc(encryptedMessageLength + 1);
@@ -238,16 +231,12 @@ int Cryptograph::RSAEncrypt(const unsigned char *message, size_t messageLength,
 	memset(*encryptedMessage, 0, encryptedMessageLength + 1);
 	
 
-	std::cout << "\nMEMCPY1 + 0: " << encryptedHeaderSize << std::endl;
 	memcpy(*encryptedMessage, encryptedMessageHeader, encryptedHeaderSize);
 
-	std::cout << "MEMCPY2 + " << encryptedHeaderSize << " : " << updateBlockLength << std::endl;
 	memcpy(*encryptedMessage + encryptedHeaderSize, encryptedMessageUpdate, updateBlockLength);
 
-	std::cout << "MEMCPY3 + "  << encryptedHeaderSize + updateBlockLength << " : " << finalBlockLength << std::endl;
 	memcpy(*encryptedMessage + encryptedHeaderSize + updateBlockLength, encryptedMessageFinal, finalBlockLength);
 
-	close (fd);
 
   	return encryptedMessageLength;
 }
