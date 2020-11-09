@@ -146,6 +146,7 @@ int 	CryptoWrapper::receiveRemoteCertificate(int sockfd) {
 
 #endif
 
+#include <unistd.h>
 int		CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 	int 			encryptedMessageLength = 0;
 	unsigned char 	*encryptedMessage = NULL;
@@ -154,11 +155,12 @@ int		CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 #ifdef USE_RSA
 
 	(void)sentBytes;
-	(void)sockfd;
-	(void)encryptedMessageLength;
-	(void)encryptedMessage;
-	(void)buf;
-	(void)len;
+
+	encryptedMessageLength = _cryptograph->RSAEncrypt((const unsigned char*)buf, len + 1, &encryptedMessage);
+
+std::cout << "Encrypted message length: " << encryptedMessageLength << "bytes" << std::endl;
+
+	write(sockfd, encryptedMessage, encryptedMessageLength);
 
 /*
 	unsigned char 	*sessionKey;

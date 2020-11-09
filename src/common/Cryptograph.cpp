@@ -119,52 +119,137 @@ int	Cryptograph::initRSA(void) {
 
 	return 0;
 }
-
+#include <unistd.h>
+#include <fcntl.h>
 int Cryptograph::RSAEncrypt(const unsigned char *message, size_t messageLength,
-	unsigned char **encryptedMessage,
-	unsigned char **sessionKey, size_t *sessionKeyLength, // Sessionkey!
-	unsigned char **iv, size_t *ivLength) {
-
+	unsigned char **encryptedMessage) {
 
 	size_t encryptedMessageLength = 0;
-  	size_t blockLength = 0;
 
+	unsigned char	*sessionKey[1];
+	int				sessionKeyLength = 0;
+	int				net_sessionKeyLength = 0;
 
-	*sessionKey = (unsigned char*)malloc(EVP_PKEY_size(_remotePublicKey));
-  	*iv = (unsigned char*)malloc(EVP_MAX_IV_LENGTH);
-  	*ivLength = EVP_MAX_IV_LENGTH;
+	unsigned char	iv[EVP_MAX_IV_LENGTH];
+	bzero(iv, EVP_MAX_IV_LENGTH);
 
-	if(*sessionKey == NULL || *iv == NULL) {
-    	return -1;
-  	}
-
-	*encryptedMessage = (unsigned char*)malloc(messageLength + EVP_MAX_IV_LENGTH);
-  	if(encryptedMessage == NULL) {
-    	return -1;
-  	}
+	sessionKey[0] = (unsigned char*)malloc(EVP_PKEY_size(_remotePublicKey));  
 
 	/* Encryption and decryption with asymmetric keys is computationally expensive. */
 	/* Typically then messages are not encrypted directly with such keys but are    */
 	/* instead encrypted using a symmetric "session" key. This key is itself then 	*/
 	/* encrypted using the public key.												*/
 	/* In OpenSSL this combination is referred to as an envelope.					*/
-  	if(!EVP_SealInit(_rsaEncryptContext, EVP_aes_256_cbc(),
-	  				sessionKey, (int*)sessionKeyLength, *iv, &_remotePublicKey, 1)) {
+  	if(!EVP_SealInit(_rsaEncryptContext, EVP_aes_256_cbc(), sessionKey, &sessionKeyLength,
+					iv, &_remotePublicKey, 1)) {
+		std::cerr << "Error in EVP_sealInit()" << std::endl;
     	return -1;
   	}
+	
+	int fd = open("debug.rsa", O_RDWR | O_CREAT, 0744);
 
-  	if(!EVP_SealUpdate(_rsaEncryptContext, *encryptedMessage + encryptedMessageLength,
-	  					(int*)&blockLength, (const unsigned char*)message, (int)messageLength)) {
+	/* Session keys & iv's */
+	net_sessionKeyLength = htonl(sessionKeyLength);
+
+	size_t	encryptedHeaderSize = sizeof(net_sessionKeyLength) + sessionKeyLength + EVP_MAX_IV_LENGTH;
+
+	unsigned char	*encryptedMessageHeader = (unsigned char*)malloc(encryptedHeaderSize + 1);
+	memset(encryptedMessageHeader, 0, encryptedHeaderSize + 1);
+
+	memcpy((char *)encryptedMessageHeader, (const char*)&net_sessionKeyLength, sizeof(net_sessionKeyLength));
+	memcpy((char *)encryptedMessageHeader + sizeof(net_sessionKeyLength), (const char*)sessionKey[0], sessionKeyLength);
+	memcpy((char *)encryptedMessageHeader + sizeof(net_sessionKeyLength) + sessionKeyLength, (const char*)iv, EVP_MAX_IV_LENGTH);
+
+	encryptedMessageLength += encryptedHeaderSize;
+
+	std::cout << "encryptedHeaderSize: " << encryptedHeaderSize << std::endl;
+	std::cout << "encryptedMessageLength: " << encryptedMessageLength << std::endl;
+
+	//write(fd, encryptedMessageHeader, encryptedHeaderSize);
+
+	
+	//strncat((char *)*encryptedMessage, (const char*)encryptedMessageUpdate, updateBlockLength);
+	//strncat((char *)*encryptedMessage, (const char*)encryptedMessageFinal, finalBlockLength);
+
+//	std::cout << "Size net_ekey: " << sizeof(net_sessionKeyLength) <<  " sessionkey: "<< sessionKeyLength <<  " IV: "<< EVP_MAX_IV_LENGTH << std::endl;
+//	std::cout << "Total: " << encryptedHeaderSize << std::endl;
+
+/*	write(fd, (const char*)&net_sessionKeyLength, sizeof(net_sessionKeyLength));
+    write(fd, (const char*)sessionKey[0], sessionKeyLength);
+    write(fd, (const char*)iv, EVP_MAX_IV_LENGTH);
+*/
+/*
+	*encryptedMessage = (unsigned char*)malloc(encryptedMessageLength + 1);
+	memset(*encryptedMessage, 1, encryptedMessageLength + 1);
+
+	memcpy((char *)*encryptedMessage, (const char*)encryptedMessageHeader, encryptedHeaderSize);
+*/
+
+/*
+	
+	//write(fd, encryptedMessageHeader, encryptedHeaderSize);
+	write(fd, (const char*)&net_sessionKeyLength, sizeof(net_sessionKeyLength));
+    write(fd, (const char*)sessionKey[0], sessionKeyLength);
+    write(fd, (const char*)iv, EVP_MAX_IV_LENGTH);
+	close (fd);
+
+  	return encryptedHeaderSize;*/
+
+
+	
+	/* Insert message here */
+	unsigned int	updateBlockLength = 0;
+	unsigned char	encryptedMessageUpdate[CRYPT_BUFFER_SIZE];
+
+	memset(encryptedMessageUpdate, 0, CRYPT_BUFFER_SIZE);
+
+  	if(!EVP_SealUpdate(_rsaEncryptContext, encryptedMessageUpdate,(int *)&updateBlockLength,
+					(const unsigned char*)message, (int)messageLength)) {
+		std::cerr << "Error in EVP_sealUpdate()" << std::endl;
     	return -1;
   	}
-  	encryptedMessageLength += blockLength;
+	encryptedMessageLength += updateBlockLength;
 
-  	if(!EVP_SealFinal(_rsaEncryptContext, *encryptedMessage + encryptedMessageLength, (int*)&blockLength)) {
+	std::cout << "updateBlockLength: " << updateBlockLength << std::endl;
+	std::cout << "encryptedMessageLength: " << encryptedMessageLength << std::endl;
+
+	//write(fd, encryptedMessageUpdate, updateBlockLength);
+
+	/* Navy Seal */
+	unsigned int	finalBlockLength = 0;
+	unsigned char	encryptedMessageFinal[CRYPT_BUFFER_SIZE];
+	memset(encryptedMessageUpdate, 0, CRYPT_BUFFER_SIZE);
+	
+
+  	if(!EVP_SealFinal(_rsaEncryptContext, encryptedMessageFinal, (int*)&finalBlockLength)) {
+		std::cerr << "Error in EVP_sealFinal()" << std::endl;
     	return -1;
   	}
-  	encryptedMessageLength += blockLength;
+	encryptedMessageLength += finalBlockLength;
 
-  	return (int)encryptedMessageLength;
+	std::cout << "finalBlockLength: " << finalBlockLength << std::endl;
+	std::cout << "encryptedMessageLength: " << encryptedMessageLength << std::endl;
+
+	//write(fd, encryptedMessageFinal, finalBlockLength);
+	
+	*encryptedMessage = (unsigned char*)malloc(encryptedMessageLength + 1);
+	if (*encryptedMessage == NULL)
+		std::cout << "Allocation failed!!!" << std::endl;
+	memset(*encryptedMessage, 0, encryptedMessageLength + 1);
+	
+
+	std::cout << "\nMEMCPY1 + 0: " << encryptedHeaderSize << std::endl;
+	memcpy(*encryptedMessage, encryptedMessageHeader, encryptedHeaderSize);
+
+	std::cout << "MEMCPY2 + " << encryptedHeaderSize << " : " << updateBlockLength << std::endl;
+	memcpy(*encryptedMessage + encryptedHeaderSize, encryptedMessageUpdate, updateBlockLength);
+
+	std::cout << "MEMCPY3 + "  << encryptedHeaderSize + updateBlockLength << " : " << finalBlockLength << std::endl;
+	memcpy(*encryptedMessage + encryptedHeaderSize + updateBlockLength, encryptedMessageFinal, finalBlockLength);
+
+	close (fd);
+
+  	return encryptedMessageLength;
 }
 
 int Cryptograph::RSADecrypt(unsigned char *encryptedMessage, size_t encryptedMessageLength,

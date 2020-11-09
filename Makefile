@@ -43,8 +43,8 @@ SERVER_CERTFILE = "$(RSA_FILE_PATH)$(SERVER)$(RSA_CERTIFICATE)"
 
 	CREATE_KEY_DIRECTORY := $(shell mkdir $(RSA_FILE_PATH) 2>&-)
 	
-	CREATE_KEYPAIR_CLIENT := $(shell openssl req -x509 -newkey rsa:$(RSA_KEYLENGTH) -keyout $(CLIENT_KEYFILE) -out $(CLIENT_CERTFILE) -days $(RSA_VALID_DAYS) -nodes -subj $(RSA_SUBJECT) 2>&-)
-	CREATE_KEYPAIR_SERVER := $(shell openssl req -x509 -newkey rsa:$(RSA_KEYLENGTH) -keyout $(SERVER_KEYFILE) -out $(SERVER_CERTFILE) -days $(RSA_VALID_DAYS) -nodes -subj $(RSA_SUBJECT) 2>&-)
+	CREATE_KEYPAIR_CLIENT = $(shell openssl req -x509 -newkey rsa:$(RSA_KEYLENGTH) -keyout $(CLIENT_KEYFILE) -out $(CLIENT_CERTFILE) -days $(RSA_VALID_DAYS) -nodes -subj $(RSA_SUBJECT))
+	CREATE_KEYPAIR_SERVER = $(shell openssl req -x509 -newkey rsa:$(RSA_KEYLENGTH) -keyout $(SERVER_KEYFILE) -out $(SERVER_CERTFILE) -days $(RSA_VALID_DAYS) -nodes -subj $(RSA_SUBJECT))
 
 	CFLAGS += "-DCLIENT_PKEY=\"$(CLIENT_KEYFILE)\""
 	CFLAGS += "-DCLIENT_CERT=\"$(CLIENT_CERTFILE)\""
@@ -61,8 +61,8 @@ endif
 
 # Compiler Debug Flags
 ifeq ($(d), 1)
-	CFLAGS += -g3
-	CFLAGS += -fsanitize=address,undefined
+	CFLAGS += -g3 -ggdb
+	#CFLAGS += -fsanitize=address,undefined
 else ifeq ($(d), 2)
 	CFLAGS += -g3
 	CFLAGS += -fsanitize=address,undefined
@@ -144,9 +144,13 @@ COMMON_OBJS = $(patsubst %.cpp, $(PATH_OBJS)%.o, $(COMMON_SRCS))
 
 #---------------------------------- THA RULES ---------------------------------#
 
+ifeq ($(use),rsa)
+all: CREATE_RSA_KEYS $(CLIENT) $(SERVER)
+else
 all: $(CLIENT) $(SERVER)
+endif
 
-$(CLIENT): $(PATH_OBJS) $(CLIENT_OBJS) $(COMMON_OBJS) $(RSA_CLIENT)
+$(CLIENT): $(PATH_OBJS) $(CLIENT_OBJS) $(COMMON_OBJS)
 	$(CC) $(CFLAGS) $(I_INCLUDES) $(CLIENT_OBJS) $(COMMON_OBJS) $(LIBCRYPTO) -o $@
 	printf "$@ is ready.\n"
 
@@ -154,7 +158,7 @@ $(CLIENT_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADER) Makefile
 	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
 
 
-$(SERVER): $(PATH_OBJS) $(DAEMON_OBJS) $(COMMON_OBJS) $(RSA_SERVER)
+$(SERVER): $(PATH_OBJS) $(DAEMON_OBJS) $(COMMON_OBJS)
 	$(CC) $(CFLAGS) $(I_INCLUDES) $(DAEMON_OBJS) $(COMMON_OBJS) $(LIBCRYPTO) -o $@
 	printf "$@ is ready.\n"
 
@@ -167,6 +171,10 @@ $(COMMON_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADER) Makefile
 
 $(PATH_OBJS):
 	mkdir $@
+
+CREATE_RSA_KEYS:
+	@$(CREATE_KEYPAIR_CLIENT)
+	@$(CREATE_KEYPAIR_SERVER)
 
 #---------------------------------- CLEANING ----------------------------------#
 
@@ -182,6 +190,7 @@ clean:
 	$(RM) $(SERVER_KEYFILE)
 	$(RM) $(SERVER_CERTFILE)
 	printf "Server RSA keys deleted\n"
+	$(RM) $(RSA_FILE_PATH)
 
 fclean: clean
 	$(RM) $(SERVER)

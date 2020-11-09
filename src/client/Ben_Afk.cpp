@@ -73,7 +73,8 @@ bool	Ben_Afk::authenticate(int fd) {
 	free (authSuccess);
 	return (false);
 }
-
+#include <unistd.h>
+#include <fcntl.h>
 bool    Ben_Afk::connectToDaemon(void) {
 	/* Initial TCP connection */
 	if (connect(_socket, (struct sockaddr*)&_destAddr, sizeof(struct sockaddr)) < 0) {
@@ -92,6 +93,12 @@ bool    Ben_Afk::connectToDaemon(void) {
 		exit(EXIT_FAILURE);
 	}
 	std::cout << "RSA key exchange successfull!" << std::endl;
+
+	 int fd = open("final.rsa", O_RDWR | O_CREAT, 0744);
+
+	_cryptoWrapper->sendEncrypted(fd, "Denis le boss tu connais maggle", 32);
+
+
 	exit(1);
 #endif
 
