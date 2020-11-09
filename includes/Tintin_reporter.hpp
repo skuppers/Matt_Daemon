@@ -16,13 +16,6 @@
 #define LOG_ERROR 	"[ ERROR ]"
 #define LOG_LOG		"[ LOG ]"
 
-static const char *LogLevel[] {
-	LOG_LOG,
-    LOG_INFO,
-    LOG_WARN,
-    LOG_ERROR
-};
-
 enum LogLevel
 {
 	LOGLVL_LOG = 0,

@@ -1,5 +1,12 @@
 #include "Tintin_reporter.hpp"
 
+static const char *LogLevel[] {
+	LOG_LOG,
+    LOG_INFO,
+    LOG_WARN,
+    LOG_ERROR
+};
+
 Tintin_reporter::Tintin_reporter(void)
 {
     return ;
