@@ -121,13 +121,13 @@ int     ConnectionManager::acceptNewClients(void) {
 		_logger->log(LOGLVL_INFO, "The RSA key exchange proccess succeeded.");
 
 
-		char *msg = "Denis le boss tu connais maggle";
+/*		char *msg = "Denis le boss tu connais maggle sisi";
 
 		if (_cryptoWrapper->sendEncrypted(newfd, msg, strlen(msg)) <= 0) {
 			std::cout << "Error sending encrypted message!" << std::endl;
 		}
 
-	exit(1);
+	exit(1);*/
 #endif
 
 

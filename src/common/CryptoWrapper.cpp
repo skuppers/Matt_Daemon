@@ -145,6 +145,7 @@ int 	CryptoWrapper::receiveRemoteCertificate(int sockfd) {
 }
 
 #endif
+
 int		CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 	int				sentBytes;
 	int 			encryptedMessageLength = 0;
@@ -172,29 +173,21 @@ int		CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 		return -1;
 	}
 
-	std::cout << "Sent " << sentBytes << " bytes" << std::endl;
 	return encryptedMessageLength;
 }
 
 int 	CryptoWrapper::recvEncrypted(int sockfd, char **decrypt_buffer) {
 	int				receivedBytes;
 	int 			decryptedMessageLength = 0;
-	char			encryptedMessageBuffer[GENERIC_BUFFER_SIZE]; // allocate those
+	char			encryptedMessageBuffer[GENERIC_BUFFER_SIZE];
 	
-	/* Receive the encrypted message */
 	bzero(encryptedMessageBuffer, GENERIC_BUFFER_SIZE);
 
-
+	/* Receive the encrypted message */
 	receivedBytes = recv(sockfd, encryptedMessageBuffer, GENERIC_BUFFER_SIZE - 1, 0);
-
-
 
 	if (receivedBytes <= 0) 
 		return receivedBytes;
-
-std::cout << "Received " << receivedBytes << " bytes" << std::endl;
-
-
 
 	/* Decrypt the message with the cryptograph */
 #ifdef USE_RSA

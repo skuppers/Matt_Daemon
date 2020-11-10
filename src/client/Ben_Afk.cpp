@@ -94,14 +94,14 @@ bool    Ben_Afk::connectToDaemon(void) {
 	std::cout << "RSA key exchange successfull!" << std::endl;
 
 
-	char *decrypted = NULL;
+/*	char *decrypted = NULL;
 	if (_cryptoWrapper->recvEncrypted(_socket, &decrypted) <= 0) {
 		std::cout << "Error receiving global" << std::endl;
 	}
 
 	std::cout << "\nDecrypted message: " << decrypted << std::endl;
 
-	exit(1);
+	exit(1);*/
 #endif
 
 
