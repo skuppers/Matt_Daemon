@@ -17,7 +17,7 @@ Todo Checklist:
     - [ ] Crypt communications (Verify error handling)
       - [x] AES 
       - [x] RSA
-      - [ ] Make PBKDF password & salt modifiable in makefile
+      - [x] Make PBKDF password & salt modifiable in makefile
  - [x] Client
     - [x] Basic prompt
     - [x] Pop a shell (/bin/sh)
