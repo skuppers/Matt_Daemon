@@ -146,6 +146,7 @@ int 	CryptoWrapper::receiveRemoteCertificate(int sockfd) {
 
 #endif
 #include <unistd.h>
+#include <fcntl.h>
 int		CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 	int				sentBytes;
 	int 			encryptedMessageLength = 0;
@@ -153,7 +154,7 @@ int		CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 	
 	/* Encrypt message with the cryptograph */
 #ifdef USE_RSA
-	encryptedMessageLength = _cryptograph->RSAEncrypt((const unsigned char*)buf, len + 1, &encryptedMessage);
+	encryptedMessageLength = _cryptograph->RSAEncrypt((const unsigned char*)buf, len, &encryptedMessage);
 #else
 	encryptedMessageLength = _cryptograph->AESEncrypt((const unsigned char*)buf, len + 1, &encryptedMessage);
 #endif
@@ -164,7 +165,9 @@ int		CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 	}
 
 	/* Send the encrypted message */
-	sentBytes = write(sockfd, encryptedMessage, encryptedMessageLength);
+int fd = open("outfile", O_RDWR | O_CREAT, 0744);
+	sentBytes = write(fd, encryptedMessage, encryptedMessageLength);
+close(fd);
 
 	free(encryptedMessage);
 
@@ -172,6 +175,8 @@ int		CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 		printf("Error sending message\n");
 		return -1;
 	}
+
+	std::cout << "Sent " << sentBytes << " bytes" << std::endl;
 	return encryptedMessageLength;
 }
 
@@ -182,10 +187,21 @@ int 	CryptoWrapper::recvEncrypted(int sockfd, char **decrypt_buffer) {
 	
 	/* Receive the encrypted message */
 	bzero(encryptedMessageBuffer, GENERIC_BUFFER_SIZE);
-	receivedBytes = read(sockfd, encryptedMessageBuffer, GENERIC_BUFFER_SIZE - 1);
+
+
+//tmp
+int fd = open("outfile", O_RDONLY);
+
+	receivedBytes = read(fd, encryptedMessageBuffer, GENERIC_BUFFER_SIZE - 1);
+
+close(fd);
 
 	if (receivedBytes <= 0) 
 		return receivedBytes;
+
+std::cout << "Received " << receivedBytes << " bytes" << std::endl;
+
+
 
 	/* Decrypt the message with the cryptograph */
 #ifdef USE_RSA

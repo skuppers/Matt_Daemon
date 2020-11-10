@@ -94,20 +94,18 @@ bool    Ben_Afk::connectToDaemon(void) {
 	}
 	std::cout << "RSA key exchange successfull!" << std::endl;
 
-	 int fd = open("final.rsa", O_RDWR | O_CREAT, 0744);
+	 //int fd = open("final.rsa", O_RDWR | O_CREAT, 0744);
 
-	if (_cryptoWrapper->sendEncrypted(fd, "Denis le boss tu connais maggle", 32) <= 0) {
-		std::cout << "Error sending global" << std::endl;
-	}
-	close(fd);
-	fd = open("final.rsa", O_RDWR | O_CREAT, 0744);
+	
+	//close(fd);
+	//fd = open("final.rsa", O_RDWR | O_CREAT, 0744);
+
 	char *decrypted = NULL;
-	if (_cryptoWrapper->recvEncrypted(fd, &decrypted) <= 0) {
+	if (_cryptoWrapper->recvEncrypted(_socket, &decrypted) <= 0) {
 		std::cout << "Error receiving global" << std::endl;
 	}
-	close(fd);
 
-	std::cout << "Message: " << decrypted << std::endl;
+	std::cout << "\nMessage: " << decrypted << std::endl;
 
 	exit(1);
 #endif
