@@ -165,7 +165,7 @@ int		CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 	}
 
 	/* Send the encrypted message */
-int fd = open("outfile", O_RDWR | O_CREAT, 0744);
+int fd = open("sendfile", O_RDWR | O_CREAT, 0744);
 	sentBytes = write(fd, encryptedMessage, encryptedMessageLength);
 close(fd);
 

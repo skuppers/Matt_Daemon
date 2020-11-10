@@ -166,6 +166,7 @@ int Cryptograph::RSAEncrypt(const unsigned char *message, size_t messageLength, 
 
 
 // Testings
+int fd = open("outfile", O_RDWR | O_CREAT, 0744);
 int fd1 = open("header", O_RDWR | O_CREAT, 0744);
 int fd2 = open("update", O_RDWR | O_CREAT, 0744);
 int fd3 = open("final", O_RDWR | O_CREAT, 0744);
@@ -191,6 +192,10 @@ write(fd1, (char*)&net_sessionKeyLength, sizeof(net_sessionKeyLength));
 write(fd1, sessionKey[0], sessionKeyLength);
 write(fd1, iv, EVP_MAX_IV_LENGTH);
 
+write(fd, (char*)&net_sessionKeyLength, sizeof(net_sessionKeyLength));
+write(fd, sessionKey[0], sessionKeyLength);
+write(fd, iv, EVP_MAX_IV_LENGTH);
+
 close(fd1);
 
 
@@ -213,12 +218,13 @@ close(fd1);
 	encryptedMessageLength += updateBlockLength;
 
 write(fd2, encryptedMessageUpdate, updateBlockLength);
+write(fd, encryptedMessageUpdate, updateBlockLength);
 close(fd2);
 
 	/* Navy Seal */
 	unsigned int	finalBlockLength = 0;
 	unsigned char	encryptedMessageFinal[CRYPT_BUFFER_SIZE];
-	memset(encryptedMessageUpdate, 0, CRYPT_BUFFER_SIZE);
+	memset(encryptedMessageFinal, 0, CRYPT_BUFFER_SIZE);
 
   	if(!EVP_SealFinal(_rsaEncryptContext, encryptedMessageFinal, (int*)&finalBlockLength)) {
 		std::cerr << "Error in EVP_sealFinal()" << std::endl;
@@ -227,6 +233,7 @@ close(fd2);
 	encryptedMessageLength += finalBlockLength;
 
 write(fd3, encryptedMessageFinal, finalBlockLength);
+write(fd, encryptedMessageFinal, finalBlockLength);
 close(fd3);
 
 	*encryptedMessage = (unsigned char*)malloc(encryptedMessageLength + 1);
@@ -236,7 +243,7 @@ close(fd3);
 	memcpy(*encryptedMessage + encryptedHeaderSize, encryptedMessageUpdate, updateBlockLength);
 	memcpy(*encryptedMessage + encryptedHeaderSize + updateBlockLength, encryptedMessageFinal, finalBlockLength);
 
-//close(fd);
+close(fd);
 
   	return encryptedMessageLength;
 }
@@ -305,7 +312,7 @@ write(fd1, iv, EVP_MAX_IV_LENGTH);
 close(fd1);
 
 
-
+/*
 unsigned int ekeylen;
 unsigned char *encryptKey; 
 
@@ -321,7 +328,7 @@ if (!encryptKey)
 }
 read(outfd, encryptKey, ekeylen);
 read(outfd, iv, sizeof(iv));
-
+*/
 
 	if (!EVP_OpenInit(_rsaDecryptContext, EVP_aes_256_cbc(), 
 		   sessionKey, net_sessionKeyLength, iv, privateKey)) {
@@ -334,9 +341,9 @@ read(outfd, iv, sizeof(iv));
 //std::cout << "rest: " << rest << std::endl;
 //std::cout << "headerLength: " << headerLength << std::endl;
 
-//	unsigned char decryptedMessageUpdate[CRYPT_BUFFER_SIZE];
-//	memset(decryptedMessageUpdate, 0, CRYPT_BUFFER_SIZE);
-//	int decryptedMessageUpdateLength;
+	unsigned char decryptedMessageUpdate[CRYPT_BUFFER_SIZE];
+	memset(decryptedMessageUpdate, 0, CRYPT_BUFFER_SIZE);
+	int decryptedMessageUpdateLength;
 
 	size_t headerLength = sizeof(net_sessionKeyLength) + net_sessionKeyLength + EVP_MAX_IV_LENGTH;
 	std::cout << "encryptedMessageLength: " << encryptedMessageLength << " headerLength " << (int)headerLength << std::endl;
@@ -349,52 +356,64 @@ read(outfd, iv, sizeof(iv));
 //	EVP_DecryptUpdate();
 //std::cout << "\nEVP_OpenUpdate..." << std::endl;
 
+/*
 	char 	buf[512];
 	int 	buflen;
 
 	std::cout << "Mesage rest len: " << rest << " as int " << (int)rest << std::endl;
-
 
 char ebuf[512];
 int readlen = read(outfd, ebuf, sizeof(ebuf));
 
 
 	write(1, "\n\nDecrypted: ", 12);
-	if (!EVP_OpenUpdate(_rsaDecryptContext, (unsigned char*)buf, &buflen,
-						(const unsigned char*)ebuf, (int)readlen)) {
+*/
+	size_t	totalDecryptedLength;
+	char	decryptedMessageBuffer[CRYPT_BUFFER_SIZE];
+
+
+	if (!EVP_OpenUpdate(_rsaDecryptContext, (unsigned char*)decryptedMessageUpdate, &decryptedMessageUpdateLength,
+						(const unsigned char*)encryptedMessageRest, (int)rest)) {
 		std::cerr << "Error in EVP_OpenUpdate" << std::endl;
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}
-	write(STDOUT_FILENO, buf, buflen);
+	totalDecryptedLength += decryptedMessageUpdateLength;
+
+	
+//	write(STDOUT_FILENO, buf, buflen);
 
 //std::cout << "EVP_OpenUpdate OK!" << std::endl;
+/*
 write(fd, buf, buflen);
 write(fd2, buf, buflen);
 close(fd2);
-//std::cout << "Message: " << std::endl;
-//write(STDOUT_FILENO, decryptedMessageUpdate, decryptedMessageUpdateLength);
 
+std::cout << "\nMessage: " ;
+write(STDOUT_FILENO, decryptedMessageUpdate, decryptedMessageUpdateLength);
+*/
 //memcpy(*decryptedMessage, decryptedMessageUpdate, decryptedMessageUpdateLength);
 
-
-//	unsigned char decryptedMessageFinal[CRYPT_BUFFER_SIZE];
-//	memset(decryptedMessageFinal, 0, CRYPT_BUFFER_SIZE);
-//	unsigned int decryptedMessageFinalLength = decryptedMessageUpdateLength;
-
+/*
+	unsigned char decryptedMessageFinal[CRYPT_BUFFER_SIZE];
+	memset(decryptedMessageFinal, 0, CRYPT_BUFFER_SIZE);
+	int decryptedMessageFinalLength = decryptedMessageUpdateLength;
+*/
 //std::cout << "\nEVP_OpenFinal..." << std::endl;
-	EVP_OpenFinal(_rsaDecryptContext, (unsigned char *)buf, &buflen);
-	write(STDOUT_FILENO, buf, buflen);
-//std::cout << "EVP_OpenFinal OK!" << std::endl;
+	EVP_OpenFinal(_rsaDecryptContext, (unsigned char *)decryptedMessageUpdate, &decryptedMessageUpdateLength);
 
+	totalDecryptedLength += decryptedMessageUpdateLength;
+//	write(STDOUT_FILENO, buf, buflen);
+//std::cout << "EVP_OpenFinal OK!" << std::endl;
+/*
 	write(fd3, buf, buflen);
-	write(fd, buf, buflen);
+	write(fd, buf, buflen);*/
 	close(fd);
 	close(fd3);
 
 //std::cout << "\n\nFinal: " << std::endl;
 //write(STDOUT_FILENO, decryptedMessageUpdate, decryptedMessageUpdateLength);
-
+//write(STDOUT_FILENO, "\n", 1);
 //memcpy(*decryptedMessage + decryptedMessageUpdateLength, decryptedMessageUpdate, decryptedMessageFinalLength);
 	
 
@@ -402,8 +421,7 @@ close(fd2);
 //	strncat((char*)(*decryptedMessage), (char *)decryptedMessageFinal, decryptedMessageFinalLength);
 
 exit(0);
-return 0;
-	//return (decryptedMessageUpdateLength + decryptedMessageFinalLength);
+	return (0);
 /*
 
 	size_t decryptedMessageLength = 0;
