@@ -145,8 +145,6 @@ int 	CryptoWrapper::receiveRemoteCertificate(int sockfd) {
 }
 
 #endif
-#include <unistd.h>
-#include <fcntl.h>
 int		CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 	int				sentBytes;
 	int 			encryptedMessageLength = 0;
@@ -165,9 +163,7 @@ int		CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 	}
 
 	/* Send the encrypted message */
-int fd = open("sendfile", O_RDWR | O_CREAT, 0744);
-	sentBytes = write(fd, encryptedMessage, encryptedMessageLength);
-close(fd);
+	sentBytes = send(sockfd, encryptedMessage, encryptedMessageLength, 0);
 
 	free(encryptedMessage);
 
@@ -189,12 +185,9 @@ int 	CryptoWrapper::recvEncrypted(int sockfd, char **decrypt_buffer) {
 	bzero(encryptedMessageBuffer, GENERIC_BUFFER_SIZE);
 
 
-//tmp
-int fd = open("outfile", O_RDONLY);
+	receivedBytes = recv(sockfd, encryptedMessageBuffer, GENERIC_BUFFER_SIZE - 1, 0);
 
-	receivedBytes = read(fd, encryptedMessageBuffer, GENERIC_BUFFER_SIZE - 1);
 
-close(fd);
 
 	if (receivedBytes <= 0) 
 		return receivedBytes;
