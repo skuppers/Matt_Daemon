@@ -145,83 +145,59 @@ int 	CryptoWrapper::receiveRemoteCertificate(int sockfd) {
 }
 
 #endif
-
 #include <unistd.h>
 int		CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
+	int				sentBytes;
 	int 			encryptedMessageLength = 0;
 	unsigned char 	*encryptedMessage = NULL;
-	size_t			sentBytes;
-
-#ifdef USE_RSA
-
-	(void)sentBytes;
-
-	encryptedMessageLength = _cryptograph->RSAEncrypt((const unsigned char*)buf, len + 1, &encryptedMessage);
-
-std::cout << "Encrypted message length: " << encryptedMessageLength << "bytes" << std::endl;
-
-	write(sockfd, encryptedMessage, encryptedMessageLength);
-
-/*
-	unsigned char 	*sessionKey;
-	unsigned char 	*iv;
-	size_t 			sessionKeyLength;
-	size_t 			ivLength;
 	
-
-	encryptedMessageLength = _cryptograph->RSAEncrypt((const unsigned char*)buf, len + 1,
-   		&encryptedMessage, &sessionKey, &sessionKeyLength,
-		&iv, &ivLength);
-	if (encryptedMessageLength == -1) {
-		printf("Error encrypting message\n");
-		exit (-1);
-	}
-*/
-
-#else
 	/* Encrypt message with the cryptograph */
+#ifdef USE_RSA
+	encryptedMessageLength = _cryptograph->RSAEncrypt((const unsigned char*)buf, len + 1, &encryptedMessage);
+#else
 	encryptedMessageLength = _cryptograph->AESEncrypt((const unsigned char*)buf, len + 1, &encryptedMessage);
+#endif
+
 	if (encryptedMessageLength == -1) {
 		printf("Error encrypting message\n");
-		exit (-1);
+		return -1;
 	}
 
 	/* Send the encrypted message */
-	sentBytes = send(sockfd, encryptedMessage, encryptedMessageLength, 0);
-	if (sentBytes <= 0)
-		return -1;
+	sentBytes = write(sockfd, encryptedMessage, encryptedMessageLength);
 
 	free(encryptedMessage);
-#endif
+
+	if (sentBytes <= 0) {
+		printf("Error sending message\n");
+		return -1;
+	}
 	return encryptedMessageLength;
 }
 
 int 	CryptoWrapper::recvEncrypted(int sockfd, char **decrypt_buffer) {
+	int				receivedBytes;
 	int 			decryptedMessageLength = 0;
 	char			encryptedMessageBuffer[GENERIC_BUFFER_SIZE]; // allocate those
-	size_t			receivedBytes;
-
-#ifdef USE_RSA
-	(void)decryptedMessageLength;
-	(void)encryptedMessageBuffer;
-	(void)receivedBytes;
-	(void)sockfd;
-	(void)decrypt_buffer;
-#else
+	
 	/* Receive the encrypted message */
 	bzero(encryptedMessageBuffer, GENERIC_BUFFER_SIZE);
-	receivedBytes = recv(sockfd, encryptedMessageBuffer, GENERIC_BUFFER_SIZE - 1, 0);
+	receivedBytes = read(sockfd, encryptedMessageBuffer, GENERIC_BUFFER_SIZE - 1);
+
 	if (receivedBytes <= 0) 
 		return receivedBytes;
 
 	/* Decrypt the message with the cryptograph */
-	decryptedMessageLength = _cryptograph->AESDecrypt((unsigned char*)encryptedMessageBuffer,
-														receivedBytes, (unsigned char **)decrypt_buffer);
+#ifdef USE_RSA
+	decryptedMessageLength = _cryptograph->RSADecrypt((unsigned char*)encryptedMessageBuffer, receivedBytes, (unsigned char **)decrypt_buffer);
+#else
+	decryptedMessageLength = _cryptograph->AESDecrypt((unsigned char*)encryptedMessageBuffer, receivedBytes, (unsigned char **)decrypt_buffer);
+#endif
+
 	if (decryptedMessageLength == -1) {
 		printf("Error decrypting message\n");
-		exit (-1);
+		return -1;
 	}
-#endif
 	return decryptedMessageLength;
 }
 

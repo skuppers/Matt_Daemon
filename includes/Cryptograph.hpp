@@ -1,6 +1,7 @@
 #ifndef __CRYPTOGRAPH__H__
 #define __CRYPTOGRAPH__H__
 
+#include "KeyLoader.hpp"
 #include <openssl/conf.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -13,8 +14,8 @@
 /* For HTONL */
 #include <netinet/in.h>
 
-#define AES_ROUNDS 6
-#define RSA_KEYLEN 2048
+#define AES_ROUNDS 				6
+#define RSA_KEYLEN 				2048
 #define CRYPT_BUFFER_SIZE		4096
 
 class Cryptograph
@@ -23,6 +24,8 @@ class Cryptograph
 //#ifdef USE_RSA
 
 		/* RSA */
+		KeyLoader		*_keyLoader;
+
 		EVP_PKEY 		*_localKeypair;
 		EVP_PKEY        *_remotePublicKey;
 
@@ -63,8 +66,7 @@ class Cryptograph
 		/* RSA */
 
 		int 	RSAEncrypt(const unsigned char *message, size_t messageLength, unsigned char **encryptedMessage);
-		int		RSADecrypt(unsigned char *encryptedMessage, size_t encryptedMessageLength, unsigned char **decryptedMessage,
-							unsigned char *encryptedKey, size_t encryptedKeyLength, unsigned char *iv, size_t ivLength);
+		int		RSADecrypt(unsigned char *encryptedMessage, size_t encryptedMessageLength, unsigned char **decryptedMessage);
 
 		int				getLocalPrivateKey(unsigned char **privateKey);
 		int				getLocalPublicKey(unsigned char **publickey);

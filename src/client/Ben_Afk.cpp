@@ -96,8 +96,18 @@ bool    Ben_Afk::connectToDaemon(void) {
 
 	 int fd = open("final.rsa", O_RDWR | O_CREAT, 0744);
 
-	_cryptoWrapper->sendEncrypted(fd, "Denis le boss tu connais maggle", 32);
+	if (_cryptoWrapper->sendEncrypted(fd, "Denis le boss tu connais maggle", 32) <= 0) {
+		std::cout << "Error sending global" << std::endl;
+	}
+	close(fd);
+	fd = open("final.rsa", O_RDWR | O_CREAT, 0744);
+	char *decrypted = NULL;
+	if (_cryptoWrapper->recvEncrypted(fd, &decrypted) <= 0) {
+		std::cout << "Error receiving global" << std::endl;
+	}
+	close(fd);
 
+	std::cout << "Message: " << decrypted << std::endl;
 
 	exit(1);
 #endif

@@ -62,7 +62,7 @@ endif
 # Compiler Debug Flags
 ifeq ($(d), 1)
 	CFLAGS += -g3 -ggdb
-	#CFLAGS += -fsanitize=address,undefined
+	CFLAGS += -fsanitize=address,undefined
 else ifeq ($(d), 2)
 	CFLAGS += -g3
 	CFLAGS += -fsanitize=address,undefined
