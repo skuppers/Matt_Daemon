@@ -1,6 +1,7 @@
 #ifndef __POLICYMANAGER__H__
 #define __POLICYMANAGER__H__
 
+#include "Tintin_reporter.hpp"
 #include <iostream>
 #include <sys/file.h>
 #include <string.h>
@@ -21,6 +22,8 @@ class PolicyManager
         std::string     getLockfilePath(void) const;
         void            lock(void);
         void            unlock(void);
+
+        void	        logEncryptionType(Tintin_reporter &l);
 };
 
 std::ostream & operator<<(std::ostream &out, PolicyManager const &in);

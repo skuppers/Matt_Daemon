@@ -53,6 +53,24 @@ std::string PolicyManager::getLockfilePath(void) const {
     return this->_lockfilePath;
 }
 
+void PolicyManager::logEncryptionType(Tintin_reporter &logger) {
+#ifdef  USE_RSA
+	logger.log(LOGLVL_INFO, "CryptoWrapper is running with RSA encryption.");
+#else
+	logger.log(LOGLVL_INFO, "CryptoWrapper is running with AES encryption.");
+	#ifdef CUSTOM_PBKD_PASS
+		logger.log(LOGLVL_INFO, "AES encryption is using a custom password.");
+	#else
+		logger.log(LOGLVL_WARN, "AES encryption is using the default password!");
+	#endif
+	#ifdef CUSTOM_PBKD_SALT
+		logger.log(LOGLVL_INFO, "AES encryption is using a custom salt.");
+	#else
+		logger.log(LOGLVL_WARN, "AES encryption is using the default salt!");
+	#endif
+#endif
+	return ;
+}
 
 PolicyManager &PolicyManager::operator=(const PolicyManager & rhs)
 {

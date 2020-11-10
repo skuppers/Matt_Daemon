@@ -369,12 +369,10 @@ int Cryptograph::generateAesKey(unsigned char **aesKey, unsigned char **aesIv) {
 
 	/* We will use a Password Based Key Derivation Function (PBKDF) */
 	/* This password must be the same on client and daemon */
-	/* TODO: make this makefile-dependent/modifiable  */
-	/* Also create a 256 byte buffer for the password */
-	strncpy((char*)aesPass, "AB1gf#ck2ing77P4ssW0r|)_For#crea39t10(@ES_Key);", _aesKeyLength);
+	strncpy((char*)aesPass, PBKD_PASS, _aesKeyLength);
 
 	/* Same thing for the salt */
-	strncpy((char*)aesSalt, "42069420", _aesIvLength);
+	strncpy((char*)aesSalt, PBKD_SALT, _aesIvLength);
 
 	/* Derive them with sha256 */
 	if(EVP_BytesToKey(EVP_aes_256_cbc(), EVP_sha256(), aesSalt, aesPass, _aesKeyLength, AES_ROUNDS, *aesKey, *aesIv) == 0) {

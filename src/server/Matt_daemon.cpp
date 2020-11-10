@@ -44,7 +44,8 @@ int		main(void)
 	//daemonize(&logger);
 	
 	CryptoWrapper 	cw;
-	
+	policymgr.logEncryptionType(logger);
+
 	ConnectionManager conmgr(&logger, &cw);
 	if (conmgr.initSocket()) 
 		conmgr.handleIncoming();

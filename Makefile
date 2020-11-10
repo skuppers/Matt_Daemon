@@ -27,19 +27,19 @@ ifeq ($(use),rsa)
 
 	CFLAGS += "-DUSE_RSA"
 
-RSA_PRIVKEY      = "_private.pem"
-RSA_CERTIFICATE  = "_cert.pem"
+	RSA_PRIVKEY      = "_private.pem"
+	RSA_CERTIFICATE  = "_cert.pem"
 
-RSA_KEYLENGTH    = 2048
-RSA_VALID_DAYS   = 365
-RSA_SUBJECT	     = "/C=FR/ST=Paris/L=France/O=42born2code/OU=School/CN=www.42.fr"
-RSA_FILE_PATH    = "/tmp/matt_daemon/"
+	RSA_KEYLENGTH    = 2048
+	RSA_VALID_DAYS   = 365
+	RSA_SUBJECT	     = "/C=FR/ST=Paris/L=France/O=42born2code/OU=School/CN=www.42.fr"
+	RSA_FILE_PATH    = "/tmp/matt_daemon/"
 
-CLIENT_KEYFILE  = "$(RSA_FILE_PATH)$(CLIENT)$(RSA_PRIVKEY)"
-CLIENT_CERTFILE = "$(RSA_FILE_PATH)$(CLIENT)$(RSA_CERTIFICATE)"
+	CLIENT_KEYFILE  = "$(RSA_FILE_PATH)$(CLIENT)$(RSA_PRIVKEY)"
+	CLIENT_CERTFILE = "$(RSA_FILE_PATH)$(CLIENT)$(RSA_CERTIFICATE)"
 
-SERVER_KEYFILE  = "$(RSA_FILE_PATH)$(SERVER)$(RSA_PRIVKEY)"
-SERVER_CERTFILE = "$(RSA_FILE_PATH)$(SERVER)$(RSA_CERTIFICATE)"
+	SERVER_KEYFILE  = "$(RSA_FILE_PATH)$(SERVER)$(RSA_PRIVKEY)"
+	SERVER_CERTFILE = "$(RSA_FILE_PATH)$(SERVER)$(RSA_CERTIFICATE)"
 
 	CREATE_KEY_DIRECTORY := $(shell mkdir $(RSA_FILE_PATH) 2>&-)
 	
@@ -55,6 +55,22 @@ SERVER_CERTFILE = "$(RSA_FILE_PATH)$(SERVER)$(RSA_CERTIFICATE)"
 
 else
 	CFLAGS += "-DUSE_AES"
+
+	DEFAULT_PBKD_PASSWORD = "AB1gfck2ing77P4ssW0rForcrea39t10ESKey"
+	DEFAULT_PBKD_SALT = "42069420"
+
+	ifneq ($(pbkd),)
+		CFLAGS += "-DCUSTOM_PBKD_PASS"
+		CFLAGS += "-DPBKD_PASS=\"$(pbkd)\""
+	else
+		CFLAGS += "-DPBKD_PASS=\"$(DEFAULT_PBKD_PASSWORD)\""
+	endif
+	ifneq ($(salt),)
+		CFLAGS += "-DCUSTOM_PBKD_SALT"
+		CFLAGS += "-DPBKD_SALT=\"$(salt)\""
+	else
+		CFLAGS += "-DPBKD_SALT=\"$(DEFAULT_PBKD_SALT)\""
+	endif
 endif
 
 #---------------------------------- DEBUGGING --------------------------------#

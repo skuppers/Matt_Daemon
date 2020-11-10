@@ -19,8 +19,8 @@
 class CryptoWrapper
 {
 	private:
-		Cryptograph *_cryptograph;
-		KeyLoader	*_keyLoader;
+		Cryptograph 	*_cryptograph;
+		KeyLoader		*_keyLoader;
 		
 	public:
 		CryptoWrapper(void);

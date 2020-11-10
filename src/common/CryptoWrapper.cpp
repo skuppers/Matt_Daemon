@@ -203,7 +203,6 @@ int 	CryptoWrapper::recvEncrypted(int sockfd, char **decrypt_buffer) {
 	return decryptedMessageLength;
 }
 
-
 CryptoWrapper &CryptoWrapper::operator=(const CryptoWrapper & rhs)
 {
 	if (this != &rhs)
