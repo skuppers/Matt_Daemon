@@ -31,27 +31,31 @@ First, make sure that you have OpenSSL's developement header installed, as we us
 
 From then, you can just simply build the project with all the default values defined.
 
- ##### Default AES     -  `Spoiler: this is not recommended.`
+ #### Default AES     -  `Spoiler: this is not recommended.`
 This will compile the code with AES encryption, with the default `PBKDF` password `AB1g0lDP4ssW0rd` and salt `42069420`. The default authentication password will also be used: `42born2code`
 
 `$ make`
 
- ##### Custom AES
+ #### Custom AES
 If you want to define your passwords yourself, you can! Use the following syntax:
+
 `$ make pbkd="MyOwnPBKDFPassword" salt=1337 password="PasswordsOnGithubAreBad"`
 
 This will define the AES password based key derivation password as `MyOwnPBKDFPassword` and the corresponding salt as `1337`. The password for authentication, when connecting to the daemon will be `PasswordsOnGithubAreBad`.
 
-##### RSA
+#### RSA
 As RSA uses OpenSSL's certificates and private keys, the default behaviour is pretty safe.
 You can generate them with the command:
+
 `$ make generate`
 
 This will generate a 2048 bit length Private key and a public certificate for the client and the daemon. Stored in `/tmp/matt_daemon`|
 From then, to build the binaries with RSA support:
+
 `$ make use=rsa`
 
 Remember that you still can modify the authentication password!
+
 `$ make use=rsa password="MyLoginPassword`
 
 
