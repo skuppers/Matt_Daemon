@@ -11,6 +11,11 @@ CFLAGS += -D _GNU_SOURCE
 
 LIBCRYPTO += -lcrypto
 
+#---------------------------------- POLICIES ----------------------------------#
+
+RUNPATH = "/var/run/matt_daemon/"
+LOCKPATH = "/var/lock/matt_daemon/"
+
 #------------------------------- AUTHENTICATION -------------------------------#
 
 DEFAULT_AUTHENTICATION_PASSWORD="42born2code"
@@ -23,29 +28,25 @@ endif
 
 #--------------------------------- AES / RSA ----------------------------------#
 
+OPENSSL = "openssl"
+
+RSA_FILE_PATH    = "/tmp/matt_daemon/"
+
+RSA_PRIVKEY      = "_private.pem"
+RSA_CERTIFICATE  = "_cert.pem"
+
+RSA_KEYLENGTH    = 2048
+RSA_VALID_DAYS   = 365
+RSA_SUBJECT	     = "/C=FR/ST=Paris/L=France/O=42born2code/OU=School/CN=www.42.fr"
+
+CLIENT_KEYFILE  += "$(RSA_FILE_PATH)$(CLIENT)$(RSA_PRIVKEY)"
+CLIENT_CERTFILE += "$(RSA_FILE_PATH)$(CLIENT)$(RSA_CERTIFICATE)"
+SERVER_KEYFILE  += "$(RSA_FILE_PATH)$(SERVER)$(RSA_PRIVKEY)"
+SERVER_CERTFILE += "$(RSA_FILE_PATH)$(SERVER)$(RSA_CERTIFICATE)"
+
 ifeq ($(use),rsa)
 
 	CFLAGS += "-DUSE_RSA"
-
-	RSA_PRIVKEY      = "_private.pem"
-	RSA_CERTIFICATE  = "_cert.pem"
-
-	RSA_KEYLENGTH    = 2048
-	RSA_VALID_DAYS   = 365
-	RSA_SUBJECT	     = "/C=FR/ST=Paris/L=France/O=42born2code/OU=School/CN=www.42.fr"
-	RSA_FILE_PATH    = "/tmp/matt_daemon/"
-
-	CLIENT_KEYFILE  = "$(RSA_FILE_PATH)$(CLIENT)$(RSA_PRIVKEY)"
-	CLIENT_CERTFILE = "$(RSA_FILE_PATH)$(CLIENT)$(RSA_CERTIFICATE)"
-
-	SERVER_KEYFILE  = "$(RSA_FILE_PATH)$(SERVER)$(RSA_PRIVKEY)"
-	SERVER_CERTFILE = "$(RSA_FILE_PATH)$(SERVER)$(RSA_CERTIFICATE)"
-
-	CREATE_KEY_DIRECTORY := $(shell mkdir $(RSA_FILE_PATH) 2>&-)
-	
-	CREATE_KEYPAIR_CLIENT = $(shell openssl req -x509 -newkey rsa:$(RSA_KEYLENGTH) -keyout $(CLIENT_KEYFILE) -out $(CLIENT_CERTFILE) -days $(RSA_VALID_DAYS) -nodes -subj $(RSA_SUBJECT))
-	CREATE_KEYPAIR_SERVER = $(shell openssl req -x509 -newkey rsa:$(RSA_KEYLENGTH) -keyout $(SERVER_KEYFILE) -out $(SERVER_CERTFILE) -days $(RSA_VALID_DAYS) -nodes -subj $(RSA_SUBJECT))
-
 	CFLAGS += "-DCLIENT_PKEY=\"$(CLIENT_KEYFILE)\""
 	CFLAGS += "-DCLIENT_CERT=\"$(CLIENT_CERTFILE)\""
 	CFLAGS += "-DSERVER_PKEY=\"$(SERVER_KEYFILE)\""
@@ -149,7 +150,6 @@ vpath %.cpp $(PATH_CLIENT_SRCS)
 vpath %.cpp $(PATH_DAEMON_SRCS)
 vpath %.cpp $(PATH_COMMON_SRCS)
 
-
 #----------------------------------- OBJECTS ----------------------------------#
 
 PATH_OBJS = objs/
@@ -157,14 +157,16 @@ CLIENT_OBJS = $(patsubst %.cpp, $(PATH_OBJS)%.o, $(CLIENT_SRCS))
 DAEMON_OBJS = $(patsubst %.cpp, $(PATH_OBJS)%.o, $(DAEMON_SRCS))
 COMMON_OBJS = $(patsubst %.cpp, $(PATH_OBJS)%.o, $(COMMON_SRCS))
 
-
 #---------------------------------- THA RULES ---------------------------------#
 
-ifeq ($(use),rsa)
-all: CREATE_RSA_KEYS $(CLIENT) $(SERVER)
-else
 all: $(CLIENT) $(SERVER)
-endif
+
+generate:
+	printf "Creating key directory.\n"
+	mkdir -p $(RSA_FILE_PATH)
+	printf "Generating openssl keys\n"
+	$(OPENSSL) req -x509 -newkey rsa:$(RSA_KEYLENGTH) -keyout $(CLIENT_KEYFILE) -out $(CLIENT_CERTFILE) -days $(RSA_VALID_DAYS) -nodes -subj $(RSA_SUBJECT)
+	$(OPENSSL) req -x509 -newkey rsa:$(RSA_KEYLENGTH) -keyout $(SERVER_KEYFILE) -out $(SERVER_CERTFILE) -days $(RSA_VALID_DAYS) -nodes -subj $(RSA_SUBJECT)
 
 $(CLIENT): $(PATH_OBJS) $(CLIENT_OBJS) $(COMMON_OBJS)
 	$(CC) $(CFLAGS) $(I_INCLUDES) $(CLIENT_OBJS) $(COMMON_OBJS) $(LIBCRYPTO) -o $@
@@ -173,7 +175,6 @@ $(CLIENT): $(PATH_OBJS) $(CLIENT_OBJS) $(COMMON_OBJS)
 $(CLIENT_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADER) Makefile
 	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
 
-
 $(SERVER): $(PATH_OBJS) $(DAEMON_OBJS) $(COMMON_OBJS)
 	$(CC) $(CFLAGS) $(I_INCLUDES) $(DAEMON_OBJS) $(COMMON_OBJS) $(LIBCRYPTO) -o $@
 	printf "$@ is ready.\n"
@@ -181,16 +182,11 @@ $(SERVER): $(PATH_OBJS) $(DAEMON_OBJS) $(COMMON_OBJS)
 $(DAEMON_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADER) Makefile
 	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
 
-
 $(COMMON_OBJS): $(PATH_OBJS)%.o: %.cpp $(HEADER) Makefile
 	$(CC) $(CFLAGS) $(I_INCLUDES) -c $< -o $@
 
 $(PATH_OBJS):
 	mkdir $@
-
-CREATE_RSA_KEYS:
-	@$(CREATE_KEYPAIR_CLIENT)
-	@$(CREATE_KEYPAIR_SERVER)
 
 #---------------------------------- CLEANING ----------------------------------#
 
@@ -200,19 +196,23 @@ clean:
 	$(RM) -R $(DSYM)
 	printf "Objs from $(SERVER) removed\n"
 	printf "Objs from $(CLIENT) removed\n"
-	$(RM) $(CLIENT_KEYFILE)
-	$(RM) $(CLIENT_CERTFILE)
-	printf "Client RSA keys deleted\n"
-	$(RM) $(SERVER_KEYFILE)
-	$(RM) $(SERVER_CERTFILE)
-	printf "Server RSA keys deleted\n"
-	$(RM) $(RSA_FILE_PATH)
 
 fclean: clean
 	$(RM) $(SERVER)
 	$(RM) $(CLIENT)
 	printf "$(SERVER) removed\n"
 	printf "$(CLIENT) removed\n"
+	$(RM) -rf $(RUNPATH)
+	printf "Runpath removed\n"
+	$(RM) -rf $(LOCKPATH)
+	printf "Lockpath removed\n"
+	$(RM) $(CLIENT_KEYFILE)
+	$(RM) $(CLIENT_CERTFILE)
+	printf "Client RSA keys removed\n"
+	$(RM) $(SERVER_KEYFILE)
+	$(RM) $(SERVER_CERTFILE)
+	printf "Server RSA keys removed\n"
+	$(RM) -rf $(RSA_FILE_PATH)
 
 re: fclean all
 
@@ -220,5 +220,5 @@ FORCE:
 
 #------------------------------------- MISC -----------------------------------#
 
-.PHONY: clean fclean re all
+.PHONY: clean fclean re all generate
 .SILENT:
