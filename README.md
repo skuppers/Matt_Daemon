@@ -4,7 +4,6 @@ Develop a simple daemon which listens to a given port an interpret some commands
 Todo Checklist:
  - [x] Logging (Tintin_reporter)
     -  [x] Add Loglevel (Info, warning, error...)
-    - [ ] Advanced logs (Rotation, archiving)
  - [x] Daemonizing
  - [x] Signal handling
  - [x] Policies (uid, lockfile, etc...)
@@ -17,9 +16,8 @@ Todo Checklist:
     - [ ] Crypt communications (Verify error handling)
       - [x] AES 
       - [x] RSA
-      - [ ] Make PBKDF password & salt modifiable in makefile
+      - [x] Make PBKDF password & salt modifiable in makefile
  - [x] Client
     - [x] Basic prompt
     - [x] Pop a shell (/bin/sh)
-    - [ ] Download daemon logs
     - [x] Authentication
