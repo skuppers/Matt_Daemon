@@ -52,7 +52,7 @@ int Cryptograph::init(void) {
 }
 
 
-//#ifdef USE_RSA
+#ifdef USE_RSA
 
 int	Cryptograph::initRSA(void) {
 	
@@ -76,7 +76,6 @@ int	Cryptograph::initRSA(void) {
 
 	return 0;
 }
-
 
 int Cryptograph::RSAEncrypt(const unsigned char *message, size_t messageLength, unsigned char **encryptedMessage) {
 
@@ -174,97 +173,99 @@ int Cryptograph::RSAEncrypt(const unsigned char *message, size_t messageLength, 
   	return encryptedMessageLength;
 }
 
-
-//#endif
-
 int Cryptograph::RSADecrypt(unsigned char *encryptedMessage, size_t encryptedMessageLength, unsigned char **decryptedMessage) {
 
-	//int				sessionKeyLength = 0;
 	unsigned char 	*sessionKey; 
-	int				net_sessionKeyLength = 0;
-	EVP_PKEY 		*privateKey;
-
+	int				sessionKeyLength 		= 0;
+	size_t			totalDecryptedLength 	= 0;
 	unsigned char	iv[EVP_MAX_IV_LENGTH];
+
+
+	/* Zero out the IV buffer */
 	memset(iv, 0, EVP_MAX_IV_LENGTH);
 
-	privateKey = _localKeypair;
+	/* Extract the sessionkey length from the encrypted message */
+	/* and convert it back to host byte order.					*/
+	memcpy(&sessionKeyLength, encryptedMessage, sizeof(sessionKeyLength));
+	sessionKeyLength = ntohl(sessionKeyLength);
 
-
-
-	memcpy(&net_sessionKeyLength, encryptedMessage, sizeof(net_sessionKeyLength));
-	net_sessionKeyLength = ntohl(net_sessionKeyLength);
-
-
-
-	if (net_sessionKeyLength != EVP_PKEY_size(privateKey))
+	/* Check for sessionkey length mismatch */
+	if (sessionKeyLength != EVP_PKEY_size(_localKeypair))
 	{
-        EVP_PKEY_free(privateKey);
-		std::cout << "net_sessionKeyLength mismatch!" << std::endl;
-		exit(1);	
+        //EVP_PKEY_free(privateKey);
+		std::cout << "sessionKeyLength mismatch!" << std::endl;
+		return -1;	
+	}
+
+	/* Allocate memory for the sessionkey and zero it out */
+	sessionKey = (unsigned char*)malloc(sizeof(char) * (sessionKeyLength + 1));
+	memset(sessionKey, 0 , sizeof(char) * (sessionKeyLength + 1));
+
+	/* Extract the sessionkey and the IV's from the encrypted message */
+	memcpy(sessionKey, encryptedMessage + sizeof(sessionKeyLength), sessionKeyLength);
+	memcpy(iv, encryptedMessage + sizeof(sessionKeyLength) + sessionKeyLength, EVP_MAX_IV_LENGTH);
+
+	/* Now that header data is extracted, pass them to EVP_OpenInit() */
+	if (!EVP_OpenInit(_rsaDecryptContext, EVP_aes_256_cbc(), sessionKey, sessionKeyLength, iv, _localKeypair)) {
+			   	std::cerr << "Error in EVP_OpenInit" << std::endl;
+				ERR_print_errors_fp(stderr);
 	}
 
 
-
-	sessionKey = (unsigned char*)malloc(sizeof(char) * (net_sessionKeyLength + 1));
-	memset(sessionKey, 0 , sizeof(char) * (net_sessionKeyLength + 1));
-
-	memcpy(sessionKey, encryptedMessage + sizeof(net_sessionKeyLength), net_sessionKeyLength);
-	memcpy(iv, encryptedMessage + sizeof(net_sessionKeyLength) + net_sessionKeyLength, EVP_MAX_IV_LENGTH);
-
-
-
-
-	if (!EVP_OpenInit(_rsaDecryptContext, EVP_aes_256_cbc(), 
-		   sessionKey, net_sessionKeyLength, iv, privateKey)) {
-			   	std::cerr << "Error in EVP_OpenInit" << std::endl;
-				ERR_print_errors_fp(stderr);
-		   }
-
-
-	unsigned char decryptedMessageUpdate[CRYPT_BUFFER_SIZE];
-	memset(decryptedMessageUpdate, 0, CRYPT_BUFFER_SIZE);
-	int decryptedMessageUpdateLength = 0;
-
-	size_t headerLength = sizeof(net_sessionKeyLength) + net_sessionKeyLength + EVP_MAX_IV_LENGTH;
-	std::cout << "encryptedMessageLength: " << encryptedMessageLength << " headerLength " << (int)headerLength << std::endl;
-	int rest = encryptedMessageLength - headerLength;
-	unsigned char *encryptedMessageRest = (encryptedMessage + headerLength);
-
-
-
-
-	size_t	totalDecryptedLength = 0;
+	/* Prepare general decryption buffer and zero it out */
 	char	decryptedMessageBuffer[CRYPT_BUFFER_SIZE];
 	memset(decryptedMessageBuffer, 0, CRYPT_BUFFER_SIZE);
 
+	/* Compute the header length for more clarity in the next sections */
+	size_t headerLength = sizeof(sessionKeyLength) + sessionKeyLength + EVP_MAX_IV_LENGTH;
 
-	if (!EVP_OpenUpdate(_rsaDecryptContext, (unsigned char*)decryptedMessageUpdate, &decryptedMessageUpdateLength,
-						(const unsigned char*)encryptedMessageRest, (int)rest)) {
+	/* Compute the location of the "true message" in the complete encrypted message, */
+	/* which contains the header. Also compute the length of the "true message"		 */
+	int 			restLength				= encryptedMessageLength - headerLength;
+	unsigned char 	*encryptedMessageRest	= (encryptedMessage + headerLength);
+
+	/* Prepare message block buffer and length */
+	unsigned char decryptedMessageBlock[CRYPT_BUFFER_SIZE];
+	memset(decryptedMessageBlock, 0, CRYPT_BUFFER_SIZE);
+	int decryptedMessageBlockLength = 0;
+
+	/* Decrypt the message */
+	if (!EVP_OpenUpdate(_rsaDecryptContext, (unsigned char*)decryptedMessageBlock, &decryptedMessageBlockLength,
+						(const unsigned char*)encryptedMessageRest, (int)restLength)) {
 		std::cerr << "Error in EVP_OpenUpdate" << std::endl;
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}
-	strncpy(decryptedMessageBuffer, (const char*)decryptedMessageUpdate, decryptedMessageUpdateLength);
-	totalDecryptedLength += decryptedMessageUpdateLength;
+
+	/* Copy over the decrypted message block to the decrypted message buffer */
+	strncpy(decryptedMessageBuffer, (const char*)decryptedMessageBlock, decryptedMessageBlockLength);
+
+	/* Update the size of the total decrypted message */
+	totalDecryptedLength += decryptedMessageBlockLength;
 
 	
 
-	EVP_OpenFinal(_rsaDecryptContext, (unsigned char *)decryptedMessageUpdate, &decryptedMessageUpdateLength);
+	/* Decrypt the final message seal */
+	EVP_OpenFinal(_rsaDecryptContext, (unsigned char *)decryptedMessageBlock, &decryptedMessageBlockLength);
 
-	strncat(decryptedMessageBuffer, (const char*)decryptedMessageUpdate, decryptedMessageUpdateLength);
+	/* Concatenate the decrypted message seal to the decrypted message buffer */
+	strncat(decryptedMessageBuffer, (const char*)decryptedMessageBlock, decryptedMessageBlockLength);
 
-	totalDecryptedLength += decryptedMessageUpdateLength;
+	/* Update the size of the total decrypted message */
+	totalDecryptedLength += decryptedMessageBlockLength;
 
+
+
+	/* Allocate memory for the decryptedMessage pointer and zero it out */
 	*decryptedMessage = (unsigned char*)malloc(totalDecryptedLength + 1);
-
 	memset(*decryptedMessage, 0, totalDecryptedLength + 1);
 
+	/* Copy the decrypted message buffer to the decrypted message pointer */
 	memcpy(*decryptedMessage, decryptedMessageBuffer, totalDecryptedLength);
 
+	/* Return total length of de crypted message */
 	return (totalDecryptedLength);
 }
-
-//#endif
 
 int Cryptograph::getLocalPrivateKey(unsigned char **privateKey) {
 
@@ -283,7 +284,6 @@ int Cryptograph::getLocalPublicKey(unsigned char **publicKey) {
 
   	return bioToString(bio, publicKey);
 }
-
 
 EVP_PKEY *Cryptograph::getLocalKeypairEVP(void) {
 	return _localKeypair;
@@ -323,7 +323,7 @@ EVP_CIPHER_CTX	*Cryptograph::getRsaDecryptCTX(void) {
 	return _rsaDecryptContext;
 }
 
-//#else
+#else
 
 int Cryptograph::initAES(void) {
 	/* Create encryption and decryption contexts */
@@ -477,8 +477,7 @@ unsigned char	*Cryptograph::getAesIv(void) {
 	return _aesIv;
 }
 
-//#endif
-
+#endif
 
 Cryptograph &Cryptograph::operator=(const Cryptograph & rhs)
 {
