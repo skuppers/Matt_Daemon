@@ -82,7 +82,7 @@ bool    Ben_Afk::connectToDaemon(void) {
 	}
 
 #ifdef USE_RSA
-
+	/* RSA public key exchange process	*/
 	if (_cryptoWrapper->sendLocalCertificate(_socket) != 0) {
 		std::cerr << "Error sending local RSA public key" << std::endl;
 		exit(EXIT_FAILURE);
@@ -91,26 +91,12 @@ bool    Ben_Afk::connectToDaemon(void) {
 		std::cerr << "Error receving client RSA public key" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-	std::cout << "RSA key exchange successfull!" << std::endl;
-
-
-/*	char *decrypted = NULL;
-	if (_cryptoWrapper->recvEncrypted(_socket, &decrypted) <= 0) {
-		std::cout << "Error receiving global" << std::endl;
-	}
-
-	std::cout << "\nDecrypted message: " << decrypted << std::endl;
-
-	exit(1);*/
 #endif
-
-
-
-	/* Connection confirmation, Connection error, or Connection reset */
 
 	char *buff = NULL;
 	_cryptoWrapper->recvEncrypted(_socket, &buff);
 
+	/* Connection confirmation, Connection error, or Connection reset */
 	if (strncmp(buff, RST_CMD, strlen(RST_CMD)) == 0) {
 		std::cerr << "Error connecting to " << _destIP << ":" << _destPort << " : no slot avaible." << std::endl;
 		free(buff);

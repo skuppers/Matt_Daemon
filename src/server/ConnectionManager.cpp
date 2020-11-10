@@ -109,28 +109,16 @@ int     ConnectionManager::acceptNewClients(void) {
 	}
 	else
 	{
-		/* RSA public key exchange process	*/
-		/*									*/
+		
 #ifdef USE_RSA
-
+		/* RSA public key exchange process	*/
 		if (_cryptoWrapper->receiveRemoteCertificate(newfd) != 0
 			|| _cryptoWrapper->sendLocalCertificate(newfd) != 0) {
 			_logger->log(LOGLVL_ERROR, "The RSA key exchange proccess failed with the client.");
 			return -1;
 		}
 		_logger->log(LOGLVL_INFO, "The RSA key exchange proccess succeeded.");
-
-
-/*		char *msg = "Denis le boss tu connais maggle sisi";
-
-		if (_cryptoWrapper->sendEncrypted(newfd, msg, strlen(msg)) <= 0) {
-			std::cout << "Error sending encrypted message!" << std::endl;
-		}
-
-	exit(1);*/
 #endif
-
-
 
 		/* Ensure that no more than 3 clients can connect simultaneously */
 		if (_activeClients >= MAX_CLIENTS) {
