@@ -5,7 +5,7 @@ KeyLoader::KeyLoader(void)
     return ;
 }
 
-KeyLoader::~KeyLoader()
+KeyLoader::~KeyLoader(void)
 {
 }
 
@@ -15,8 +15,10 @@ EVP_PKEY 	*KeyLoader::readx509Certificate(const char *certfile) {
 	EVP_PKEY	*pkey;
 	FILE 		*fp;
 	
-	if (!(fp = fopen(certfile, "r")))
-		return NULL;
+	if (!(fp = fopen(certfile, "r"))) {
+		std::cerr << "Error opening certificate: " << certfile << ": " << strerror(errno) << std::endl;
+		exit(EXIT_FAILURE);
+	}
 
 	x509 = PEM_read_X509(fp, NULL, 0, NULL);
 
@@ -41,8 +43,10 @@ EVP_PKEY 	*KeyLoader::ReadPrivateKey(const char *keyfile) {
 	EVP_PKEY	*pkey;
 	FILE 		*fp;
 	
-	if (!(fp = fopen(keyfile, "r")))
-		return NULL;
+	if (!(fp = fopen(keyfile, "r"))){
+		std::cerr << "Error opening private key: " << keyfile << ": " << strerror(errno) << std::endl;
+		exit(EXIT_FAILURE);
+	}
 
 	pkey = PEM_read_PrivateKey(fp, NULL, 0, NULL);
 

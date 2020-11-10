@@ -71,9 +71,7 @@ int	Cryptograph::initRSA(void) {
 		std::cerr << "The private key file name could not be determined!" << std::endl;
 		return -1;
 	}
-	std::cerr << "privateKeyFileName: " << privateKeyFileName << std::endl;
 	_localKeypair = _keyLoader->ReadPrivateKey(privateKeyFileName);
-
 	return 0;
 }
 
