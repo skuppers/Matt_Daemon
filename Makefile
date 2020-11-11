@@ -57,8 +57,8 @@ ifeq ($(use),rsa)
 else
 	CFLAGS += "-DUSE_AES"
 
-	DEFAULT_PBKD_PASSWORD = "AB1gfck2ing77P4ssW0rForcrea39t10ESKey"
-	DEFAULT_PBKD_SALT = "42069420"
+	DEFAULT_PBKD_PASSWORD = "aP4ssW0rd"
+	DEFAULT_PBKD_SALT = "42069"
 
 	ifneq ($(pbkd),)
 		CFLAGS += "-DCUSTOM_PBKD_PASS"
