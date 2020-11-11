@@ -10,7 +10,6 @@ Cryptograph::Cryptograph(void)
 	_keyLoader = new KeyLoader();
 #else
 	initAES();
-	_keyLoader = NULL;
 #endif  //USE_RSA
 	return ;
 }

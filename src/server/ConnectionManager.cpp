@@ -289,7 +289,6 @@ pid_t    ConnectionManager::popShell(int filedesc) {
 			free(userCMD);
 			userCMD = joined;
 
-/* CD not working */
 			if (system(userCMD) != 0) {
 				_cryptoWrapper->sendEncrypted(filedesc, EXEC_ERROR_CMD, strlen(EXEC_ERROR_CMD));
 				free(userCMD);
