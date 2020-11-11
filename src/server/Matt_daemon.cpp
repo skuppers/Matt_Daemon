@@ -31,11 +31,14 @@ void	daemonize(Tintin_reporter *reporter)
 
 int		main(void)
 {
+	std::string		errorMessage;
+
     PolicyManager policymgr(DFLT_LOCKFILE);
     policymgr.checkUID();
     policymgr.lock();
 
-    Tintin_reporter logger(DFLT_LOGFILE);		// Make logfile append mode + rotation & archiving
+    Tintin_reporter logger(DFLT_LOGFILE);
+	policymgr.logEncryptionType(logger);
 	g_reporter = &logger;
 
     g_signalTerminate = false;
@@ -44,7 +47,10 @@ int		main(void)
 	//daemonize(&logger);
 	
 	CryptoWrapper 	cw;
-	policymgr.logEncryptionType(logger);
+	if (cw.getCryptograph()->checkIntegrity(&errorMessage) == false) {
+		logger.log(LOGLVL_ERROR, errorMessage);
+		return -1;
+	}
 
 	ConnectionManager conmgr(&logger, &cw);
 	if (conmgr.initSocket()) 

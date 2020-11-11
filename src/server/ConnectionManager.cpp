@@ -84,13 +84,11 @@ bool	ConnectionManager::authClient(int clientFD, char **username) {
 		return (false);
 
 	/* Verify user password with makefile defined password */
-#ifdef  AUTH_PASSWORD
 	if (strncmp(password, AUTH_PASSWORD, strlen(AUTH_PASSWORD)) == 0) {
 		free(password);
 		_cryptoWrapper->sendEncrypted(clientFD, VALIDATE_AUTHENTICATION, strlen(VALIDATE_AUTHENTICATION));
 		return (true);
 	}
-#endif
 	free(password);
 	_cryptoWrapper->sendEncrypted(clientFD, DENY_AUTHENTICATION, strlen(DENY_AUTHENTICATION));
 	return false;
@@ -203,15 +201,12 @@ void    ConnectionManager::handleIncoming(void) {
 						continue ;
 					FD_SET(newfd, &master_set);
 					++_activeClients;
-					//_logger->log(LOGLVL_INFO, "New client connection.");
 				}
 				else
 				{
 					int     readBytes;
-
-
-		char	*recvInput = NULL;
-		if ((readBytes = _cryptoWrapper->recvEncrypted(currentFD, &recvInput)) <= 0) {						
+					char	*recvInput = NULL;
+					if ((readBytes = _cryptoWrapper->recvEncrypted(currentFD, &recvInput)) <= 0) {						
 						if (readBytes == 0)
 							_logger->log(LOGLVL_INFO, "A client disconnected.");
 						else

@@ -4,6 +4,7 @@ extern char	*__progname;
 
 Cryptograph::Cryptograph(void)
 {
+	std::cout << "Creating cryptograph." << std::endl;
 	init();
 #ifdef  USE_RSA
 	initRSA();
@@ -12,27 +13,30 @@ Cryptograph::Cryptograph(void)
 	initAES();
 	_keyLoader = NULL;
 #endif  //USE_RSA
-	
 	return ;
 }
 
 Cryptograph::~Cryptograph(void)
 {
-	//deInit();
+#ifdef USE_RSA
+	delete _keyLoader;
+#endif
+	std::cout << "Deleting cryptograph." << std::endl;
+	deInit();
 	return ;
 }
 
 
 int Cryptograph::deInit(void) {
 
-	/* Removes all digests and ciphers */
-	EVP_cleanup();
-
 	/* Prevent  BIO (low level API) for e.g. base64 transformations leaks */
 	CRYPTO_cleanup_all_ex_data();
 
 	/* Remove error strings */
 	ERR_free_strings();
+
+	/* Removes all digests and ciphers */
+	EVP_cleanup();
 
 	return 0;
 }
@@ -51,27 +55,47 @@ int Cryptograph::init(void) {
 	return 0;
 }
 
+bool Cryptograph::checkIntegrity(std::string *error) {
+#ifdef USE_RSA
+	if (_localPrivateKey == NULL) {
+		*error = std::string("Error loading local private key.");
+		return false;
+	}
+	if (_rsaEncryptContext == NULL || _rsaDecryptContext == NULL) {
+		*error = std::string("Error allocating rsaEncryptContext or rsaDecryptContext.");
+		return false;
+	}
+#else
+	if (_aesEncryptContext == NULL || _aesDecryptContext == NULL) {
+		*error = std::string("Error allocating aesEncryptContext or aesDecryptContext.");
+		return false;
+	}
+	if (_aesKey == NULL || _aesIv == NULL) {
+		*error = std::string("Error allocating generating aesKey or aesIV.");
+		return false;
+	}
+#endif
+	return true;
+}
+
 
 #ifdef USE_RSA
 
 int	Cryptograph::initRSA(void) {
 	
-	_localKeypair = NULL;
+	_localPrivateKey = NULL;
 	_remotePublicKey = NULL;
 
 	_rsaEncryptContext = EVP_CIPHER_CTX_new();
-  	_rsaDecryptContext = EVP_CIPHER_CTX_new(); // Check for alloc fails
+  	_rsaDecryptContext = EVP_CIPHER_CTX_new();
 
 	char *privateKeyFileName = NULL;
 	if (strncmp(__progname, CLIENT_NAME, strlen(CLIENT_NAME)) == 0) {
 		privateKeyFileName = (char*)CLIENT_PKEY;
 	} else if (strncmp(__progname, SERVER_NAME, strlen(SERVER_NAME)) == 0) {
 		privateKeyFileName = (char*)SERVER_PKEY;
-	} else {
-		std::cerr << "The private key file name could not be determined!" << std::endl;
-		return -1;
 	}
-	_localKeypair = _keyLoader->ReadPrivateKey(privateKeyFileName);
+	_localPrivateKey = _keyLoader->ReadPrivateKey(privateKeyFileName);
 	return 0;
 }
 
@@ -101,7 +125,6 @@ int Cryptograph::RSAEncrypt(const unsigned char *message, size_t messageLength, 
   	}
 
 
-
 	/* Convert session key to network endianess */
 	net_sessionKeyLength = htonl(sessionKeyLength);
 
@@ -117,7 +140,7 @@ int Cryptograph::RSAEncrypt(const unsigned char *message, size_t messageLength, 
 	memcpy((char *)encryptedMessageHeader, (const char*)&net_sessionKeyLength, sizeof(net_sessionKeyLength));
 	memcpy((char *)encryptedMessageHeader + sizeof(net_sessionKeyLength), (const char*)sessionKey[0], sessionKeyLength);
 	memcpy((char *)encryptedMessageHeader + sizeof(net_sessionKeyLength) + sessionKeyLength, (const char*)iv, EVP_MAX_IV_LENGTH);
-
+	free(sessionKey[0]);
 	/* Update the size of the total encrypted message */
 	encryptedMessageLength += encryptedHeaderSize;
 
@@ -166,6 +189,7 @@ int Cryptograph::RSAEncrypt(const unsigned char *message, size_t messageLength, 
 	memcpy(*encryptedMessage, encryptedMessageHeader, encryptedHeaderSize);
 	memcpy(*encryptedMessage + encryptedHeaderSize, encryptedMessageBlock, messageBlockLength);
 	memcpy(*encryptedMessage + encryptedHeaderSize + messageBlockLength, encryptedMessageSeal, sealBlockLength);
+	free(encryptedMessageHeader);
 
 	/* Return the the length of the encrypted message */
   	return encryptedMessageLength;
@@ -188,7 +212,7 @@ int Cryptograph::RSADecrypt(unsigned char *encryptedMessage, size_t encryptedMes
 	sessionKeyLength = ntohl(sessionKeyLength);
 
 	/* Check for sessionkey length mismatch */
-	if (sessionKeyLength != EVP_PKEY_size(_localKeypair))
+	if (sessionKeyLength != EVP_PKEY_size(_localPrivateKey))
 	{
         //EVP_PKEY_free(privateKey);
 		std::cout << "sessionKeyLength mismatch!" << std::endl;
@@ -204,11 +228,11 @@ int Cryptograph::RSADecrypt(unsigned char *encryptedMessage, size_t encryptedMes
 	memcpy(iv, encryptedMessage + sizeof(sessionKeyLength) + sessionKeyLength, EVP_MAX_IV_LENGTH);
 
 	/* Now that header data is extracted, pass them to EVP_OpenInit() */
-	if (!EVP_OpenInit(_rsaDecryptContext, EVP_aes_256_cbc(), sessionKey, sessionKeyLength, iv, _localKeypair)) {
+	if (!EVP_OpenInit(_rsaDecryptContext, EVP_aes_256_cbc(), sessionKey, sessionKeyLength, iv, _localPrivateKey)) {
 			   	std::cerr << "Error in EVP_OpenInit" << std::endl;
 				ERR_print_errors_fp(stderr);
 	}
-
+	free(sessionKey);
 
 	/* Prepare general decryption buffer and zero it out */
 	char	decryptedMessageBuffer[CRYPT_BUFFER_SIZE];
@@ -269,7 +293,7 @@ int Cryptograph::getLocalPrivateKey(unsigned char **privateKey) {
 
 	BIO *bio = BIO_new(BIO_s_mem());
 
-  	PEM_write_bio_PrivateKey(bio, _localKeypair, NULL, NULL, 0, 0, NULL);
+  	PEM_write_bio_PrivateKey(bio, _localPrivateKey, NULL, NULL, 0, 0, NULL);
 
   	return bioToString(bio, privateKey);
 }
@@ -278,13 +302,13 @@ int Cryptograph::getLocalPublicKey(unsigned char **publicKey) {
 
 	BIO *bio = BIO_new(BIO_s_mem());
 
-	PEM_write_bio_PUBKEY(bio, _localKeypair);
+	PEM_write_bio_PUBKEY(bio, _localPrivateKey);
 
   	return bioToString(bio, publicKey);
 }
 
 EVP_PKEY *Cryptograph::getLocalKeypairEVP(void) {
-	return _localKeypair;
+	return _localPrivateKey;
 }
 
 EVP_PKEY *Cryptograph::getRemotePublicEVP(void) {
@@ -324,6 +348,9 @@ EVP_CIPHER_CTX	*Cryptograph::getRsaDecryptCTX(void) {
 #else
 
 int Cryptograph::initAES(void) {
+	_aesKey = NULL;
+	_aesIv = NULL;
+
 	/* Create encryption and decryption contexts */
 	_aesEncryptContext = EVP_CIPHER_CTX_new();
 	_aesDecryptContext = EVP_CIPHER_CTX_new();
@@ -339,7 +366,7 @@ int Cryptograph::initAES(void) {
 	_aesKeyLength = EVP_CIPHER_CTX_key_length(_aesEncryptContext);
 	_aesIvLength = EVP_CIPHER_CTX_iv_length(_aesEncryptContext);
 
-	EVP_CIPHER_CTX_set_padding(_aesEncryptContext, 0);
+//	EVP_CIPHER_CTX_set_padding(_aesEncryptContext, 0);
 
 	/* Generate aes keys */
 	generateAesKey(&_aesKey, &_aesIv);
@@ -374,7 +401,8 @@ int Cryptograph::generateAesKey(unsigned char **aesKey, unsigned char **aesIv) {
 
 	/* Derive them with sha256 */
 	if(EVP_BytesToKey(EVP_aes_256_cbc(), EVP_sha256(), aesSalt, aesPass, _aesKeyLength, AES_ROUNDS, *aesKey, *aesIv) == 0) {
-	  return -1;
+		std::cerr << "Error deriving AES key from PBKDF." << std::endl;
+		return -1;
 	}
 
 	free(aesPass);

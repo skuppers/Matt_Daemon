@@ -4,6 +4,7 @@ extern char	*__progname;
 
 CryptoWrapper::CryptoWrapper(void)
 {
+	std::cout << "Creating cryptowrapper." << std::endl;
 	_cryptograph = new Cryptograph();
 	_keyLoader = new KeyLoader();
 	return ;
@@ -11,6 +12,7 @@ CryptoWrapper::CryptoWrapper(void)
 
 CryptoWrapper::~CryptoWrapper(void)
 {
+	
 #ifdef USE_RSA
 	EVP_PKEY_free(_cryptograph->getLocalKeypairEVP());
 	EVP_PKEY_free(_cryptograph->getRemotePublicEVP());
@@ -24,7 +26,14 @@ CryptoWrapper::~CryptoWrapper(void)
 	free(_cryptograph->getAesKey());
 	free(_cryptograph->getAesIv());
 #endif
+	delete _cryptograph ;
+	delete _keyLoader ;
+	std::cout << "Deleting cryptowrapper." << std::endl;
 	return ;
+}
+
+Cryptograph *CryptoWrapper::getCryptograph(void) const {
+	return _cryptograph;
 }
 
 #ifdef USE_RSA
@@ -72,7 +81,9 @@ int		CryptoWrapper::sendLocalCertificate(int sockfd) {
 	}
 
 	/* Send over the local certificate */
-	if ((sentBytes = send(sockfd, certificateFileContent, readBytes, 0)) <= 0) {
+	sentBytes = send(sockfd, certificateFileContent, readBytes, 0);
+	free(certificateFileContent);
+	if (sentBytes <= 0) {
 		std::cerr << "Failed to send the local certificate: " << strerror(errno) << std::endl;
 		return -1;
 	}

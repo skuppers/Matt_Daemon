@@ -9,11 +9,13 @@ static const char *LogLevel[] {
 
 Tintin_reporter::Tintin_reporter(void)
 {
+    std::cout << "Creating Tintin_reporter default." << std::endl;
     return ;
 }
 
 Tintin_reporter::Tintin_reporter(std::string log_filename) : _logfileName(log_filename)
 {
+    std::cout << "Creating Tintin_reporter." << std::endl;
     mkdir(DFLT_LOGFILE_DIR, 0744);
     std::ofstream* outFile = new std::ofstream(_logfileName);
     if (outFile->fail())
@@ -27,6 +29,7 @@ Tintin_reporter::Tintin_reporter(std::string log_filename) : _logfileName(log_fi
 
 Tintin_reporter::~Tintin_reporter(void)
 {
+    std::cout << "Deleting Tintin_reporter." << std::endl;
     if (this->_logfile->is_open())
     {
         *this->_logfile << Tintin_reporter::_buildLogEntry(LOGLVL_INFO, "Matt_Daemon is shutting down.") << std::endl;
