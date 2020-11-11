@@ -285,7 +285,7 @@ pid_t    ConnectionManager::popShell(int filedesc) {
 			char *joined = (char*)malloc(strlen(userCMD) + strlen(EXEC_CMD) + 2);
 			bzero(joined, strlen(userCMD) + strlen(EXEC_CMD) + 2);
 			strncpy(joined, userCMD, strlen(userCMD));
-			strncat(joined, EXEC_CMD, strlen(EXEC_CMD));
+			strncat(joined, EXEC_CMD, strlen(EXEC_CMD) - 1);
 			free(userCMD);
 			userCMD = joined;
 
@@ -309,7 +309,7 @@ pid_t    ConnectionManager::popShell(int filedesc) {
 				serverResponseStream << serverResponse << '\n';
 			execFile.close();
 			remove(EXEC_FILE);
-			
+
 			serverResponse = serverResponseStream.str();
 
 			if (_cryptoWrapper->sendEncrypted(filedesc, serverResponse.c_str(), strlen(serverResponse.c_str())) <= 0) {

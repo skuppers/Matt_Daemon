@@ -32,7 +32,7 @@
 #define DENY_SHELL			"shell_error"
 
 #define EXEC_FILE			"/tmp/matt.ex"
-#define EXEC_CMD			" > /tmp/matt.ex"
+#define EXEC_CMD			" > /tmp/matt.ex "
 
 #define USERNAME_STR		"Username: "
 #define PASSWORD_STR		"Password: "
