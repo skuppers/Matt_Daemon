@@ -26,7 +26,7 @@ class Cryptograph
 		/* RSA */
 		KeyLoader		*_keyLoader;
 
-		EVP_PKEY 		*_localKeypair;
+		EVP_PKEY 		*_localPrivateKey;
 		EVP_PKEY        *_remotePublicKey;
 
 		EVP_CIPHER_CTX  *_rsaEncryptContext;
@@ -60,6 +60,8 @@ class Cryptograph
 		Cryptograph(void);
 		~Cryptograph(void);
 		Cryptograph &operator=(Cryptograph const &rhs);
+
+		bool checkIntegrity(std::string *errorMessage);
 
 //#ifdef USE_RSA
 

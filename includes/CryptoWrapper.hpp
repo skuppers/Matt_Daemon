@@ -32,6 +32,8 @@ class CryptoWrapper
 
 		int		sendLocalCertificate(int sockfd);
 		int		receiveRemoteCertificate(int sockfd);
+
+		Cryptograph *getCryptograph(void) const;
 };
 
 std::ostream & operator<<(std::ostream &out, CryptoWrapper const &in);
