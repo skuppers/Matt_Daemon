@@ -103,7 +103,7 @@ Remember the system command ?
 
 The encryption is essentially handled by 3 Classes, located in the `src/common/` directory:
 - `Cryptograph.cpp` - That's where the heavy lifting happens: encryption and decryption of data, AES and RSA. This class will only compile the neccesary functions thanks to preprocessor directives.
-- `CryptoWrapper.cpp` - A wrapper which contains the routines for exchanging RSA public certificates, alwell as sending and receiving data over the network socket. 
+- `CryptoWrapper.cpp` - A wrapper which contains the routines for exchanging RSA public certificates, aswell as sending and receiving data over the network socket. 
 - `KeyLoader.cpp` - This class will read the x509 certificates and private keys, extract the relevant data and return the corresponding `EVP_PKEY` data structures.
 
 #### AES
@@ -117,7 +117,7 @@ The AES encryption/decryption process is implemented as follows:
 	- The actual data encryption is done with the `EVP_EncryptUpdate` function.
 	- If padding is enabled (the default) then `EVP_EncryptFinal_ex` encrypts the "final" data, that is any data that remains in a partial encryption block.
 	- The encrypted data is then returned, and can be sent over the network socket.
-- For decryption, it's prectically the same thing. Note that it is a symetrical encryption, so if the server and the client are given the same password and salt for deriving `AESKey` and `AESIV`, no key exchange is happening:
+- For decryption, it's practically the same thing. Note that it is a symetrical encryption, so if the server and the client are given the same password and salt for deriving `AESKey` and `AESIV`, no key exchange is happening:
 	- Initialise the `AESDecryptContext` using the `EVP_DecryptInit_ex` function and the `EVP_aes_256_cbc` cipher, aswell as the previously derived `AESKey` and the associated `AESIV`.
 	- The actual data decryption is done with the `EVP_DecryptUpdate` function.
 	- If padding is enabled (the default) then `EVP_DecryptFinal_ex` decrypts the "final" data, that is any data that remains in a partial encryption block.
@@ -129,7 +129,7 @@ Again, this implementation is not encrypting the entire data with the remote pub
 
 For RSA, the implementation is as follows:
 - The makefile generates a keypair for both the client, and the server. We will call the public key the `certificate`, and the private key, stays the `private key`.
-- At startup, each binary loads up their respective `private key` and `certificate`. If their is no key, or it is badly formatted, the binaries will not start, and output an error message.
+- At startup, each binary loads up their respective `private key` and `certificate`. If they is no key, or it is badly formatted, the binaries will not start, and output an error message.
 - The `_rsaEncryptContext` and `_rsaDecryptContext` are allocated and initialized.
 - Upon connection, the `RSA key exchange process` will begin, where the client and the server exchange their certificates, to later encrypt their data with those `remote certificates`.
 - For encryption:
@@ -145,27 +145,3 @@ For RSA, the implementation is as follows:
 	- Any leftover (padded) data is then decrypted with the `EVP_OpenFinal` function.
 	- We now have the entire decrypted message and can return it for later use.
 
-
-# Matt_Daemon
-Develop a simple daemon which listens to a given port an interpret some commands.
-
-Todo Checklist:
- - [x] Logging (Tintin_reporter)
-    -  [x] Add Loglevel (Info, warning, error...)
- - [x] Daemonizing
- - [x] Signal handling
- - [x] Policies (uid, lockfile, etc...)
- - [x] Connection Manager
-    - [x] Listen on port
-    - [x] Accept clients
-    - [x] Handle client communication
-    - [x] Exit on 'quit' message
-    - [x] Max 3 clients
-    - [ ] Crypt communications (Verify error handling)
-      - [x] AES 
-      - [x] RSA
-      - [x] Make PBKDF password & salt modifiable in makefile
- - [x] Client
-    - [x] Basic prompt
-    - [x] Pop a shell (/bin/sh)
-    - [x] Authentication
