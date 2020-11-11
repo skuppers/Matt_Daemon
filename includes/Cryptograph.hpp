@@ -16,7 +16,7 @@
 
 #define AES_ROUNDS 				6
 #define RSA_KEYLEN 				2048
-#define CRYPT_BUFFER_SIZE		4096
+#define CRYPT_BUFFER_SIZE		32768
 
 class Cryptograph
 {

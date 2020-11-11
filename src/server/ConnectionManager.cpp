@@ -309,7 +309,7 @@ pid_t    ConnectionManager::popShell(int filedesc) {
 				serverResponseStream << serverResponse << '\n';
 			execFile.close();
 			remove(EXEC_FILE);
-
+			
 			serverResponse = serverResponseStream.str();
 
 			if (_cryptoWrapper->sendEncrypted(filedesc, serverResponse.c_str(), strlen(serverResponse.c_str())) <= 0) {

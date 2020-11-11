@@ -137,6 +137,11 @@ std::string *Ben_Afk::readInput(bool printShell) {
 
 int        Ben_Afk::communicate(std::string *input) {
 
+	if (input->length() == 0) {
+		delete input;
+		return true;
+	}
+
 	if (_cryptoWrapper->sendEncrypted(_socket, input->c_str(), strlen(input->c_str())) < 0) {
 		std::cerr << "Error sending data!. Quitting." << std::endl;
 		delete input;
