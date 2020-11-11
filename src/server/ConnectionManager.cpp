@@ -17,7 +17,6 @@ ConnectionManager::ConnectionManager(Tintin_reporter *logger, CryptoWrapper *cw)
 
 ConnectionManager::~ConnectionManager(void)
 {
-	// destruct/unbind/unlink socket & stuff
 	close(_listeningSocket);
 	return ;
 }
@@ -181,7 +180,6 @@ void    ConnectionManager::handleIncoming(void) {
 
 	while (!g_signalTerminate)
 	{
-		
 		tv.tv_sec = 1;
 		tv.tv_usec = 0;
 		recv_set = master_set;

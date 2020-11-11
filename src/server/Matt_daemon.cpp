@@ -29,7 +29,7 @@ void	daemonize(Tintin_reporter *reporter)
 	reporter->log(LOGLVL_INFO, "Succesfully daemonized.");
 }
 
-int		main(void)
+int		main(int ac, char **av)
 {
 	std::string		errorMessage;
 
@@ -44,10 +44,12 @@ int		main(void)
     g_signalTerminate = false;
     init_signal_handler();
 
-	//daemonize(&logger);
+	if (!(ac >= 2 && strncmp(av[1], "-d", 2) == 0))
+		daemonize(&logger);
 	
 	CryptoWrapper 	cw;
 	if (cw.getCryptograph()->checkIntegrity(&errorMessage) == false) {
+		std::cerr << errorMessage << std::endl;
 		logger.log(LOGLVL_ERROR, errorMessage);
 		return -1;
 	}

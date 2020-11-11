@@ -4,7 +4,6 @@ extern char	*__progname;
 
 Cryptograph::Cryptograph(void)
 {
-	std::cout << "Creating cryptograph." << std::endl;
 	init();
 #ifdef  USE_RSA
 	initRSA();
@@ -21,7 +20,6 @@ Cryptograph::~Cryptograph(void)
 #ifdef USE_RSA
 	delete _keyLoader;
 #endif
-	std::cout << "Deleting cryptograph." << std::endl;
 	deInit();
 	return ;
 }
@@ -106,6 +104,12 @@ int Cryptograph::RSAEncrypt(const unsigned char *message, size_t messageLength, 
 	int				net_sessionKeyLength 	= 0;
 	size_t 			encryptedMessageLength 	= 0;
 	unsigned char	iv[EVP_MAX_IV_LENGTH];
+
+	/* Never assume these keys are always there */
+	if (_remotePublicKey == NULL) {
+		std::cerr << "Error remote public key is not defined" << std::endl;
+		return -1;
+	}
 
 	/* Zero out the IV buffer */
 	memset(iv, 0, EVP_MAX_IV_LENGTH);
@@ -202,6 +206,11 @@ int Cryptograph::RSADecrypt(unsigned char *encryptedMessage, size_t encryptedMes
 	size_t			totalDecryptedLength 	= 0;
 	unsigned char	iv[EVP_MAX_IV_LENGTH];
 
+	/* Never assume these keys are always there */
+	if (_localPrivateKey == NULL) {
+		std::cerr << "Error local private key is not defined" << std::endl;
+		return -1;
+	}
 
 	/* Zero out the IV buffer */
 	memset(iv, 0, EVP_MAX_IV_LENGTH);
@@ -229,8 +238,9 @@ int Cryptograph::RSADecrypt(unsigned char *encryptedMessage, size_t encryptedMes
 
 	/* Now that header data is extracted, pass them to EVP_OpenInit() */
 	if (!EVP_OpenInit(_rsaDecryptContext, EVP_aes_256_cbc(), sessionKey, sessionKeyLength, iv, _localPrivateKey)) {
-			   	std::cerr << "Error in EVP_OpenInit" << std::endl;
-				ERR_print_errors_fp(stderr);
+		std::cerr << "Error in EVP_OpenInit" << std::endl;
+		ERR_print_errors_fp(stderr);
+		return -1;
 	}
 	free(sessionKey);
 
@@ -268,7 +278,11 @@ int Cryptograph::RSADecrypt(unsigned char *encryptedMessage, size_t encryptedMes
 	
 
 	/* Decrypt the final message seal */
-	EVP_OpenFinal(_rsaDecryptContext, (unsigned char *)decryptedMessageBlock, &decryptedMessageBlockLength);
+	if (!EVP_OpenFinal(_rsaDecryptContext, (unsigned char *)decryptedMessageBlock, &decryptedMessageBlockLength)) {
+	std::cerr << "Error in EVP_OpenFinal" << std::endl;
+		ERR_print_errors_fp(stderr);
+		return -1;
+	}
 
 	/* Concatenate the decrypted message seal to the decrypted message buffer */
 	strncat(decryptedMessageBuffer, (const char*)decryptedMessageBlock, decryptedMessageBlockLength);

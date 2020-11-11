@@ -2,13 +2,12 @@
 
 KeyLoader::KeyLoader(void)
 {
-	std::cout << "Creating Keyloader." << std::endl;
     return ;
 }
 
 KeyLoader::~KeyLoader(void)
 {
-	std::cout << "Deleting Keyloader." << std::endl;
+	return ;
 }
 
 EVP_PKEY 	*KeyLoader::readx509Certificate(const char *certfile) {

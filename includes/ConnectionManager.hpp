@@ -23,7 +23,7 @@
 
 #define	QUIT_CMD			"quit"
 #define EXIT_CMD			"exit"
-#define SHELL_CMD			"shell"
+#define SHELL_CMD			"system"
 #define RST_CMD				"rst"
 #define SYNACK_CMD 			"synack"
 #define DISCONNECT_CMD 		"disconnect"

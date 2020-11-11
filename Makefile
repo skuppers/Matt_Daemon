@@ -13,7 +13,7 @@ LIBCRYPTO += -lcrypto
 
 #---------------------------------- POLICIES ----------------------------------#
 
-RUNPATH = "/var/run/matt_daemon/"
+LOGPATH = "/var/log/matt_daemon/"
 LOCKPATH = "/var/lock/matt_daemon/"
 
 #------------------------------- AUTHENTICATION -------------------------------#
@@ -190,6 +190,22 @@ $(PATH_OBJS):
 
 #---------------------------------- CLEANING ----------------------------------#
 
+cleankey:
+	$(RM) $(CLIENT_KEYFILE)
+	$(RM) $(CLIENT_CERTFILE)
+	printf "Client RSA keys removed\n"
+	$(RM) $(SERVER_KEYFILE)
+	$(RM) $(SERVER_CERTFILE)
+	printf "Server RSA keys removed\n"
+
+cleandir: cleankey
+	#$(RM) -rf $(LOGPATH)
+	#printf "LOGPATH removed\n"
+	$(RM) -rf $(LOCKPATH)
+	printf "LOCKPATH removed\n"
+	$(RM) -rf $(RSA_FILE_PATH)
+	printf "RSA key path removed\n"
+
 clean:
 	$(RM) $(OBJS)
 	$(RM) -R $(PATH_OBJS)
@@ -197,22 +213,11 @@ clean:
 	printf "Objs from $(SERVER) removed\n"
 	printf "Objs from $(CLIENT) removed\n"
 
-fclean: clean
+fclean: clean cleandir
 	$(RM) $(SERVER)
 	$(RM) $(CLIENT)
 	printf "$(SERVER) removed\n"
 	printf "$(CLIENT) removed\n"
-	$(RM) -rf $(RUNPATH)
-	printf "Runpath removed\n"
-	$(RM) -rf $(LOCKPATH)
-	printf "Lockpath removed\n"
-	$(RM) $(CLIENT_KEYFILE)
-	$(RM) $(CLIENT_CERTFILE)
-	printf "Client RSA keys removed\n"
-	$(RM) $(SERVER_KEYFILE)
-	$(RM) $(SERVER_CERTFILE)
-	printf "Server RSA keys removed\n"
-	$(RM) -rf $(RSA_FILE_PATH)
 
 re: fclean all
 
@@ -220,5 +225,5 @@ FORCE:
 
 #------------------------------------- MISC -----------------------------------#
 
-.PHONY: clean fclean re all generate
+.PHONY: clean fclean re all generate cleankey cleandir
 .SILENT:

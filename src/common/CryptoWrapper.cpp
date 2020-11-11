@@ -4,7 +4,6 @@ extern char	*__progname;
 
 CryptoWrapper::CryptoWrapper(void)
 {
-	std::cout << "Creating cryptowrapper." << std::endl;
 	_cryptograph = new Cryptograph();
 	_keyLoader = new KeyLoader();
 	return ;
@@ -28,7 +27,6 @@ CryptoWrapper::~CryptoWrapper(void)
 #endif
 	delete _cryptograph ;
 	delete _keyLoader ;
-	std::cout << "Deleting cryptowrapper." << std::endl;
 	return ;
 }
 
@@ -170,7 +168,7 @@ int		CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 #endif
 
 	if (encryptedMessageLength == -1) {
-		printf("Error encrypting message\n");
+		std::cerr << "Error encrypting message" << std::endl;
 		return -1;
 	}
 
@@ -180,7 +178,7 @@ int		CryptoWrapper::sendEncrypted(int sockfd, const void *buf, size_t len) {
 	free(encryptedMessage);
 
 	if (sentBytes <= 0) {
-		printf("Error sending message\n");
+		std::cerr << "Error sending message" << std::endl;
 		return -1;
 	}
 
@@ -197,7 +195,7 @@ int 	CryptoWrapper::recvEncrypted(int sockfd, char **decrypt_buffer) {
 	/* Receive the encrypted message */
 	receivedBytes = recv(sockfd, encryptedMessageBuffer, GENERIC_BUFFER_SIZE - 1, 0);
 
-	if (receivedBytes <= 0) 
+	if (receivedBytes <= 0)
 		return receivedBytes;
 
 	/* Decrypt the message with the cryptograph */

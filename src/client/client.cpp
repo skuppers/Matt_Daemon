@@ -9,12 +9,17 @@ void printUsage(void) {
 
 int main(int ac, char **av)
 {
-    std::string *userInput;
+    std::string     *userInput;
+    std::string		errorMessage;
 
     if (ac < 3)
         printUsage();
 
     CryptoWrapper   cw;
+    if (cw.getCryptograph()->checkIntegrity(&errorMessage) == false) {
+		std::cerr << errorMessage << std::endl;
+		return -1;
+	}
 
     Ben_Afk benny(av[1], atoi(av[2]), &cw);
 

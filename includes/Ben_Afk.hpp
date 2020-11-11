@@ -18,7 +18,7 @@
 #define SYNACK_CMD 			"synack"
 #define	QUIT_CMD			"quit"
 #define EXIT_CMD			"exit"
-#define SHELL_CMD			"shell"
+#define SHELL_CMD			"system"
 #define DISCONNECT_CMD 		"disconnect"
 #define EXEC_ERROR_CMD 		"exec_error"
 
