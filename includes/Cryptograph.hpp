@@ -21,7 +21,11 @@
 class Cryptograph
 {
 	private:
-//#ifdef USE_RSA
+		
+		int init(void);
+		int deInit(void);
+
+#ifdef USE_RSA
 
 		/* RSA */
 		KeyLoader		*_keyLoader;
@@ -36,7 +40,7 @@ class Cryptograph
 		int 	generateRsaKeypair(EVP_PKEY **keypair);
 		int		bioToString(BIO *bio, unsigned char **string);
 
-//#else
+#else
 		/* AES */
 		EVP_CIPHER_CTX 	*_aesEncryptContext;
 		EVP_CIPHER_CTX 	*_aesDecryptContext;
@@ -50,11 +54,7 @@ class Cryptograph
 		int 	initAES(void);
     	int 	generateAesKey(unsigned char **aesKey, unsigned char **aesIv);
 
-//#endif //USE_RSA
-
-		/* General */
-		int init(void);
-		int deInit(void);
+#endif //USE_RSA
 
 	public:
 		Cryptograph(void);
@@ -63,7 +63,7 @@ class Cryptograph
 
 		bool checkIntegrity(std::string *errorMessage);
 
-//#ifdef USE_RSA
+#ifdef USE_RSA
 
 		/* RSA */
 
@@ -86,7 +86,7 @@ class Cryptograph
 
 		//writekeytofile ?
 
-//#else
+#else
 		/* AES */
 		int AESEncrypt(const unsigned char *message, size_t messageLength, unsigned char **encryptedMessage);
     	int AESDecrypt(unsigned char *encryptedMessage, size_t encryptedMessageLength, unsigned char **decryptedMessage);
@@ -96,7 +96,7 @@ class Cryptograph
 		unsigned char	*getAesKey(void);
     	unsigned char	*getAesIv(void);
 
-//#endif //USE_RSA
+#endif //USE_RSA
 		
 };
 
